@@ -26,5 +26,7 @@ urlpatterns = [
     path('account/', include('allauth.urls')),
     # url(r'account/registration/confirm-email/(?P<key>.+)/$', confirm_email, name='confirm_email'),
     path('', include('accounts.urls')),
+
+    path('location/', include("locations.urls")),
 ] 
 

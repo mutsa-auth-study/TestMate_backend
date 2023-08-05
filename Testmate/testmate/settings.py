@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
     # app 이름
     'accounts',
+    'locations',
 
     # django-allauth
     'django.contrib.sites', # multi sites 기능 지원
