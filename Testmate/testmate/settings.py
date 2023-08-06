@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'rest_auth',
 
     # app 이름
-    'accounts',
+    # 'accounts',
     'locations',
 
     # django-allauth
