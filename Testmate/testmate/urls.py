@@ -28,5 +28,6 @@ urlpatterns = [
     # path('', include('accounts.urls')),
 
     path('location/', include("locations.urls")),
+    path('exam/', include("exams.urls")),
 ] 
 

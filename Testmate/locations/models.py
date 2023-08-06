@@ -5,8 +5,8 @@ import uuid
 
 # Create your models here.
 class Post(models.Model):
-    pid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE)
+    pid = models.IntegerField(primary_key=True)
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, null = True)   # 추후에 로그인 기능 구현하면 accounts앱의 user로 수정, 추가로 null=False로 수정
     content = models.TextField('내용')
     created_at = models.DateTimeField('작성일', default=timezone.now)
     noise = models.IntegerField('소음', default=0, blank=True)
