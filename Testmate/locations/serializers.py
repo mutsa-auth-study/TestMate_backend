@@ -5,7 +5,7 @@ from .models import Post
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ("pk","content","created_at", "noise","cleanness","accessibility","facility")  # pk는 Post model의 기본키
+        fields = ("pid","content","created_at", "noise","cleanness","accessibility","facility")  # pk는 Post model의 기본키
     #미완성
 
 
