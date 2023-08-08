@@ -18,7 +18,7 @@ class Exam(models.Model):
     is_favorite = models.BooleanField(default=False)
     # default = False로 해둠 => 일단은 즐찾이 없는 상태로 시작
 
-class Exam_plan(models.Model):
+class ExamPlan(models.Model):
     exam_plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     exam_id = models.ForeignKey(Exam,on_delete=models.CASCADE,null=False) # 위에 있는 Exam모델의 기본키를 외래키로
     implYy = models.IntegerField() # 시행년도

@@ -1,5 +1,7 @@
 from django.urls import path
+from .views import ExamDetailAPIMixins, ExamTotalAPIMixins
 
 urlpatterns = [
-    # 경로 패턴들을 여기에 추가합니다.
+    path("exam/", ExamTotalAPIMixins.as_view()),
+    path("exam/<int:exam_id/", ExamDetailAPIMixins.as_view()),
 ]
