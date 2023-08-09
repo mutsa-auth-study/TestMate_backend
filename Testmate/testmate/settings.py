@@ -16,6 +16,19 @@ import json
 import sys
 from datetime import timedelta
 
+import pymysql
+import environ
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(
+    env_file=os.path.join(BASE_DIR, '.env')
+)
+
+pymysql.install_as_MySQLdb()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +37,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mr7ye(l(z36im$u0%6ev#jxwvug*7bp+n7isl3u@bz3=qo2x@m'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -68,8 +81,8 @@ SITE_ID = 1
 SOCIALACCOUNT_PROVIDERS = {
     'kakao': {
         'APP': {
-            'client_id': '49e1a5c3a4e15f6c7cf6c68f71615682',
-            'secret': '947147',
+            'client_id': env('kakao_id'),
+            'secret': env('kakao_secret'),
             'key': ''
         }
     }
@@ -119,15 +132,17 @@ WSGI_APPLICATION = 'testmate.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
+
+DATABASES = { 
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE' : 'django.db.backends.mysql',
+        'HOST': env('HOST'),
+        'PORT': env('PORT'),
+        'NAME' : env('DB_NAME'),
+        'USER': env('MYSQL_USER'),
+        'PASSWORD': env('MYSQL_PASSWORD')
     }
 }
-
-# DATABASES = my_settings.DATABASES
-# SECRET_KEY = my_settings.SECRET_KEY
 
 
 # Password validation
