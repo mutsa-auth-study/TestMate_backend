@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 # import my_settings
-import json
+import json, os
 import sys
 from datetime import timedelta
 
