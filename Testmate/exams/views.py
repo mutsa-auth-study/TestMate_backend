@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework import response, status
 import xml.etree.ElementTree as ET
 import requests
-
+'''
 class ExamTotalAPIMixins(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Exam.objects.all()
     serializer_class = ExamTotalSerializer
@@ -25,7 +25,8 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
     # GET 메소드 처리 (시험ID에 해당하는 1개의 시험 일정 불러옴)
     def get(self, request,*args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
-    
+    '''
+
 # 공공데이터 호출, post까지 하는 시험 일정 조회 API
 class ExamTotal(APIView):
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
