@@ -1,9 +1,12 @@
 from rest_framework import generics
-from rest_framework import mixins
+#from rest_framework import mixins
 
-from .models import LocationComment
-from .serializers import PostSerializer, PostCreateSerializer
+from .models import LocationComment, LocationInfo
+from .serializers import LocationCommentSerializer, LocationInfoSerializer
 
+from rest_framework.views import APIView
+
+'''
 class PostsAPIMixins(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
     queryset = LocationComment.objects.all()
     serializer_class = PostSerializer
@@ -30,3 +33,9 @@ class PostAPIMixins(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
     # DELETE 메소드 처리 (1개 삭제)
     def delete(self, request, *args, **kwargs):
         return self.destroy(request,*args, **kwargs)
+'''
+
+class InfoDetail(APIView):
+    #장소정보
+    endPoint = "요청url" #요청url 없음
+
