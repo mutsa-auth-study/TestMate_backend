@@ -27,35 +27,64 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
         return self.retrieve(request, *args, **kwargs)
     '''
 
-# 공공데이터 호출, post까지 하는 시험 일정 조회 API
+# 시험정보 전체 조회 API
 class ExamTotal(APIView):
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
     # 시험 목록
     endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"
 
-    def get(self, request, *args, **kwargs):
-         def callAPI()
-    params = {"serviceKey": decodedKey
-             }
-    # 시험 목록 조회 API 호출
-    response = requests.get(endPoint, params=params)
-    root = ET.fromstring(response.content)
+    def get(self,request, *args, **kwargs):
+        user_id = request.user_id # 로그인된 사용자의 user_id 가져오기
+        # def callAPI(user):
+        #     params = {"serviceKey": self.decodedKey}
+        #     response = requests.get(self.endPoint, params=params)
+        #     root = ET.fromstring(response.content)
+        #     dict = {}
+        #     for item in root.findall('.//item'):
+        #         dict["jmcd"] = item.find('jmcd').text #종목코드
+        #         dict["jmfldnm"] = item.find('jmfldnm').text #종목명
+        #         dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
+        #         dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
+        #         dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
+        #         dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
+        #         dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
+        #         dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
+        #         dict["seriescd"]= item.find('seriescd').text #계열코드
+        #         dict["seriesnm"] = item.find('seriesnm').text #계열명
+        def callAPI(user_id):
+            # 이 지점부터 조건문 사용해서 user_id가 있으면 즉, 로그인 되었으면 처리를 해줘야할 것 같기도..?
+            params = {"serviceKey": self.decodedKey}
+            response = requests.get(self.endPoint, params=params)
+            root = ET.fromstring(response.content)
+            data_list = []
+            for item in root.findall('.//item'):
+                data = {
+                    "jmcd": item.find('jmcd').text,
+                    "jmfldnm": item.find('jmfldnm').text,
+                    "mdobligfldcd": item.find('mdobligfldcd').text,
+                    "mdobligfldnm": item.find('mdobligfldnm').text,
+                    "obligfldcd": item.find('obligfldcd').text,
+                    "obligfldnm": item.find('obligfldnm').text,
+                    "qualgbcd": item.find('qualgbcd').text,
+                    "qualgbnm": item.find('qualgbnm').text,
+                    "seriescd": item.find('seriescd').text,
+                    "seriesnm": item.find('seriesnm').text,
+                }
+                data["user_id"] = user_id  # 사용자 ID 추가
+                data_list.append(data)
+            return data_list  
+        
+        
+        request_data = request.data # 요청 데이터를 가져옴
+        exam_favorite = callAPI(request_data["user_id"])
 
-    dict = {}
-    for item in root.findall('.//item'):
-		dict["jmcd"] = item.find('jmcd').text #종목코드
-        dict["jmfldnm"] = item.find('jmfldnm').text #종목명
-        dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
-        dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
-        dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
-        dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
-        dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
-        dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
-        dict["seriescd"]= item.find('seriescd').text #계열코드
-        dict["seriesnm"] = item.find('seriesnm').text #계열명
-
-
+        serializer = ExamTotalSerializer(data = exam_favorite)
+        if serializer.is_valid():
+            serializer.save() # 데이터베이스에 저장
+            return response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
 
