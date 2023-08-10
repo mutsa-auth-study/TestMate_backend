@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+import 
 # Create your models here.
 
 class Exam(models.Model):
@@ -34,3 +35,14 @@ class ExamPlan(models.Model):
     pracExamStartDt = models.CharField(max_length=100) # 실기(작업)/면접 시험 시작일자
     pracExamEndDt = models.CharField(max_length=100) # 실기(작업)/면접 시험 종료일자
     pracPassDt = models.CharField(max_length=100) # 실기(작업)/면접 합격자 발표일자
+
+class ExamFavorite(models.Model):
+    favorite_id = models.UUIDField(primary_key=True, defalut=uuid.uuid4)
+    exam_id = models.ForeignKey(Exam, on_delete=models.CASCADE, null=False) # Exam class의 기본키 참조
+    # user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..
+
+
+class ExamRecent(models.Model):
+    recent_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    exam_id = models.ForeignKey(Exam, on_delete=models.CASCADE, null=False ) # Exam class의 기본키 참조
+    # user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..

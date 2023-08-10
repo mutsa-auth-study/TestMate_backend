@@ -28,6 +28,36 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
     '''
 
 # 공공데이터 호출, post까지 하는 시험 일정 조회 API
+class ExamTotal(APIView):
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
+
+    # 시험 목록
+    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"
+
+    def get(self, request, *args, **kwargs):
+         def callAPI()
+    params = {"serviceKey": decodedKey
+             }
+    # 시험 목록 조회 API 호출
+    response = requests.get(endPoint, params=params)
+    root = ET.fromstring(response.content)
+
+    dict = {}
+    for item in root.findall('.//item'):
+		dict["jmcd"] = item.find('jmcd').text #종목코드
+        dict["jmfldnm"] = item.find('jmfldnm').text #종목명
+        dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
+        dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
+        dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
+        dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
+        dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
+        dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
+        dict["seriescd"]= item.find('seriescd').text #계열코드
+        dict["seriesnm"] = item.find('seriesnm').text #계열명
+
+
+
+    
 
 class ExamDetail(APIView):
     # def get(self, request, *args, **kwargs):
@@ -59,7 +89,7 @@ class ExamDetail(APIView):
             "pageNo": "1",
             "dataFormat": "xml"
             }
-            esponse = requests.get(self.endPoint, params=params)
+            response = requests.get(self.endPoint, params=params)
             root = ET.fromstring(response.content)
             dict = {}
             for item in root.findall('.//item'):
