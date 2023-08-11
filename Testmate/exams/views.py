@@ -31,11 +31,12 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
 class ExamTotal(APIView):
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
-    # 시험 목록
+    # 시험정보를 조회하는 API의 엔트포인트 주소
     endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"
 
     def get(self,request, *args, **kwargs):
-        user_id = request.user_id # 로그인된 사용자의 user_id 가져오기
+        # 로그인된 사용자의 user_id 가져오기
+        user_id = request.user_id
         # def callAPI(user):
         #     params = {"serviceKey": self.decodedKey}
         #     response = requests.get(self.endPoint, params=params)
@@ -54,10 +55,12 @@ class ExamTotal(APIView):
         #         dict["seriesnm"] = item.find('seriesnm').text #계열명
         def callAPI(user_id):
             # 이 지점부터 조건문 사용해서 user_id가 있으면 즉, 로그인 되었으면 처리를 해줘야할 것 같기도..?
-            params = {"serviceKey": self.decodedKey}
-            response = requests.get(self.endPoint, params=params)
-            root = ET.fromstring(response.content)
+            params = {"serviceKey": self.decodedKey} # API 호출을 위한 파라미터 설정
+            response = requests.get(self.endPoint, params=params) # API 호출 및 응답 받기
+            root = ET.fromstring(response.content) # XML 응답을 파싱해 데이터 추출
             data_list = []
+
+            # API 응답에서 시험정보 추출해서 리스트에 저장
             for item in root.findall('.//item'):
                 data = {
                     "jmcd": item.find('jmcd').text,
@@ -71,19 +74,20 @@ class ExamTotal(APIView):
                     "seriescd": item.find('seriescd').text,
                     "seriesnm": item.find('seriesnm').text,
                 }
-                data["user_id"] = user_id  # 사용자 ID 추가
+                data["user_id"] = user_id  # user_id 추가
                 data_list.append(data)
             return data_list  
         
         
         request_data = request.data # 요청 데이터를 가져옴
-        exam_favorite = callAPI(request_data["user_id"])
+        exam_favorite = callAPI(request_data["user_id"])    # 사용자가 즐찾한 시험정보 호출..?
 
         serializer = ExamTotalSerializer(data = exam_favorite)
         if serializer.is_valid():
             serializer.save() # 데이터베이스에 저장
             return response(serializer.data, status=status.HTTP_201_CREATED)
         
+        # 시리얼라이저가 유효하지 않으면 에러 응답 반환
         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
