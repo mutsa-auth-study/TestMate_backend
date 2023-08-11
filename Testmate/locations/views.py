@@ -36,7 +36,7 @@ class getLocationComment(APIView):
         paginator = PageNumberPagination()
         paginated_comments = paginator.paginate_queryset(locationComment,request)
         serializer = LocationCommentSerializer(paginated_comments, many=True)
-        
+
         return paginator.get_paginated_response(serializer.data)
 
 
@@ -47,7 +47,7 @@ class getLocationComment(APIView):
 # 수정, 삭제도 location_id 필요하지 않을까?
 
 # 고사장 확인 [GET][/location]
-for location in (우리 DB에 있는 고사장들)
+#for location in (우리 DB에 있는 고사장들)
 	# location.addr 추출
 	# 위도, 경도와 함께 지도 API 호출
 	# 최단거리 리스트 10개 이내에 속하면 갱신
