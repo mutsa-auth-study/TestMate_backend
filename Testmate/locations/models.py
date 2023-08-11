@@ -5,9 +5,10 @@ import uuid
 
 # Create your models here.
 class LocationComment(models.Model):
-    pid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
-    # 카카오 로그인 구현 후, reviewer 가져올 로직 생각해봐야 함 
+    location_comment_id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
+    # 카카오 로그인 구현 후, user_id(reviewer) 가져올 로직 생각해봐야 함
+    location_id = models.ForeignKey('LocationInfo', on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
     content = models.TextField('내용')
     created_at = models.DateTimeField('작성일', default=timezone.now)
     noise = models.IntegerField('소음', default=0, blank=True)
