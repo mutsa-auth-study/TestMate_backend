@@ -5,9 +5,13 @@ import uuid
 
 # Create your models here.
 class LocationComment(models.Model):
-    pid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
-    # 카카오 로그인 구현 후, reviewer 가져올 로직 생각해봐야 함 
+    location_comment_id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
+    # 카카오 로그인 구현 후, user_id(reviewer) 가져올 로직 생각해봐야 함
+    #location_id = models.ForeignKey('LocationInfo', on_delete=models.CASCADE,null=False) # ForeignKey이므로 null=False 필수
+    location_id = models.ForeignKey('LocationInfo', on_delete=models.CASCADE, null=True)
+    # migration이 안되서 일단 -> location_id 필드를 nullable로 설정함
+    # 이렇게 하면 기존의 행들은 null 값을 가질 것이고, 나중에 필요한 값을 설정할 수 있음
     content = models.TextField('내용')
     created_at = models.DateTimeField('작성일', default=timezone.now)
     noise = models.IntegerField('소음', default=0, blank=True)
