@@ -1,6 +1,5 @@
 from django.db import models
 import uuid
-import 
 # Create your models here.
 
 class Exam(models.Model):
