@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework import mixins
 
-from .models import Exam, ExamPlan
+from .models import Exam, ExamPlan, ExamFavorite
 from .serializers import ExamTotalSerializer, ExamDetailSerializer
 
 from rest_framework.views import APIView
@@ -27,8 +27,8 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
         return self.retrieve(request, *args, **kwargs)
     '''
 
-# 시험정보 전체 조회 API
-class ExamTotal(APIView):
+# /exam/favorite/
+class ExamFavorite(APIView):
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
     # 시험정보를 조회하는 API의 엔트포인트 주소
@@ -65,17 +65,15 @@ class ExamTotal(APIView):
                 data = {
                     "jmcd": item.find('jmcd').text,
                     "jmfldnm": item.find('jmfldnm').text,
-                    "mdobligfldcd": item.find('mdobligfldcd').text,
                     "mdobligfldnm": item.find('mdobligfldnm').text,
-                    "obligfldcd": item.find('obligfldcd').text,
                     "obligfldnm": item.find('obligfldnm').text,
                     "qualgbcd": item.find('qualgbcd').text,
                     "qualgbnm": item.find('qualgbnm').text,
-                    "seriescd": item.find('seriescd').text,
                     "seriesnm": item.find('seriesnm').text,
                 }
                 data["user_id"] = user_id  # user_id 추가
                 data_list.append(data)
+
             return data_list  
         
         
@@ -90,6 +88,61 @@ class ExamTotal(APIView):
         # 시리얼라이저가 유효하지 않으면 에러 응답 반환
         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# /exam/ 시험 전체 목록을 제공하는 API입니다. => 로그인 시 각 시험의 즐겨찾기 여부도 제공
+class ExamTotal(APIView):
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
+
+    # 시험정보를 조회하는 API의 엔트포인트 주소
+    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"
+
+    def get(self,request, *args, **kwargs):
+        # 로그인된 사용자의 user_id 가져오기
+        user_id = request.user_id
+
+        def callAPI(user_id):
+            params = {"serviceKey": self.decodedKey}
+            response = requests.get(self.endPoint, params=params)
+            root = ET.fromstring(response.content)
+            data_list = []
+
+            for item in root.findall('.//item'):
+                data = {
+                "jmcd": item.find('jmcd').text,
+                "jmfldnm": item.find('jmfldnm').text,
+                "mdobligfldcd": item.find('mdobligfldcd').text,
+                "mdobligfldnm": item.find('mdobligfldnm').text,
+                "obligfldcd": item.find('obligfldcd').text,
+                "obligfldnm": item.find('obligfldnm').text,
+                "qualgbcd": item.find('qualgbcd').text,
+                "qualgbnm": item.find('qualgbnm').text,
+                "seriescd": item.find('seriescd').text,
+                "seriesnm": item.find('seriesnm').text,
+                }
+                
+                # 사용자가 즐겨찾기한 시험 정보를 확인하는 로직
+                def check_if_favorite(user_id, exam_id):    # exam_id...
+                    favorite_exam = ExamFavorite.objects.filter(user_id=user_id, exam_id=exam_id).exists()
+                    return favorite_exam
+                
+                if user_id is None:
+                    data["is_favorite"] = False
+                else:
+                    data["is_favorite"] = check_if_favorite(user_id, item.find('jmcd').text)
+
+                data_list.append(data)
+            return data_list
+        
+        request_data = request.data # 요청 데이터를 가져옴
+        exam_total = callAPI(request_data["user_id"])    # 사용자가 즐찾한 시험정보 호출..?
+
+        serializer = ExamTotalSerializer(data = exam_total)
+        if serializer.is_valid():
+            serializer.save() # 데이터베이스에 저장
+            return response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        # 시리얼라이저가 유효하지 않으면 에러 응답 반환
+        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class ExamDetail(APIView):

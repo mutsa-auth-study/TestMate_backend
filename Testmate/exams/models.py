@@ -1,9 +1,6 @@
 from django.db import models
 import uuid
-<<<<<<< HEAD
-=======
 #import 
->>>>>>> a9b3a315039c44b7c52c89b514524f1d8d1dfea6
 # Create your models here.
 
 class Exam(models.Model):
