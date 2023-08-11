@@ -17,6 +17,7 @@ class Exam(models.Model):
     mdobligfldnm = models.CharField(max_length=100) # 중직무분야명
     # 대직무분야코드/ 중직무분야코드 erd에는 있고 api 명세서에 없어서 일단 추가함
     is_favorite = models.BooleanField(default=False)
+    # favorite_id = models.ForeignKey(ExamFavorite,)
     # default = False로 해둠 => 일단은 즐찾이 없는 상태로 시작
 
 class ExamPlan(models.Model):
@@ -37,9 +38,9 @@ class ExamPlan(models.Model):
     pracPassDt = models.CharField(max_length=100) # 실기(작업)/면접 합격자 발표일자
 
 class ExamFavorite(models.Model):
-    favorite_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     exam_id = models.ForeignKey(Exam, on_delete=models.CASCADE, null=False) # Exam class의 기본키 참조
-    # user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..
+    #user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..
+    #user_id 살려야함!!
 
 
 class ExamRecent(models.Model):
