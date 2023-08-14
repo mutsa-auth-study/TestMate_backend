@@ -61,6 +61,7 @@ class updateLocationComment(APIView):
             return LocationComment.objects.get(user_id=user_id, location_id=location_id)
         except LocationComment.DoesNotExist:
             return None
+        
     def patch(self, request, user_id, location_id, *args, **kwargs):
         comment = self.get_object(user_id,location_id)
         if comment is None:
@@ -77,9 +78,30 @@ class updateLocationComment(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
-# 고사장 리뷰 삭제 [DELETE][/location/comment/<uuid:location_id>] #location_id는 고사장 id
+# 고사장 리뷰 삭제 [DELETE][/location/comment/]
+class deleteLocationComment(APIView):
+    
+    # 로그인한 사용자만 접근 가능
+    permission_classes = [permissions.IsAuthenticated]
 
-# 수정, 삭제도 location_id 필요하지 않을까?
+    # 게시물이 존재하는지 확인하는 메소드
+    def get_object(self, user_id, location_id):
+        try:
+            return LocationComment.objects.get(user_id=user_id, location_id=location_id)
+        except LocationComment.DoesNotExist:
+            return None
+
+    def delete(self, request, user_id, location_id, *args, **kwargs):
+        comment = self.get_object(user_id,location_id)
+        if comment is None:
+            return Response({"error": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
+        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
+            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
 
 # 고사장 확인 [GET][/location]
 #for location in (우리 DB에 있는 고사장들)
