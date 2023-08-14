@@ -10,43 +10,37 @@ import uuid
 import xml.etree.ElementTree as ET
 import requests
 
-# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공 => exam_list로 수정(반복문)
-class ExamInfoView(APIView):
+# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
+class ExamList(APIView):
     permission_classes = [AllowAny]
     
-    def get(self, request, some_exam_ids):  # 여러 시험 ID를 리스트로 받음
-        exam_list = []  # 시험 정보를 담을 리스트 초기화
-
+    def get(self, request):
+        data = Exam.objects.all()
+        exam_list = list(data.values())  # 시험 정보를 담을 리스트 초기화
+        
         if request.user.is_authenticated:
             # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
             exam_favorites = ExamFavorite.objects.filter(user=request.user)
             favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
+    
+            # 즐찾 여부 확인
+            for exam in exam_list:
+                if exam.exam_id in favorite_exam_ids:
+                    exam["is_favorite"] = True
+                else:
+                    exam["is_favorite"] = False
+            # 미로그인 사용자는 모두 즐찾X
         else:
-            favorite_exam_ids = []  # 로그인하지 않은 사용자의 경우 빈 리스트로 초기화
+            for exam in exam_list:
+                exam["is_favorite"] = False
 
-        for some_exam_id in favorite_exam_ids:
-            try:
-                # 특정 exam_id의 Exam 객체를 가져옴
-                exam = Exam.objects.get(pk=some_exam_id)
-
-                # is_favorite 값을 항상 True로 설정
-                is_favorite = True
-
-                # Exam 객체를 시리얼라이징
-                serializer = ExamTotalSerializer(exam)
-                exam_data = serializer.data  # 시리얼라이즈된 데이터 가져오기
-
-                # is_favorite 속성 추가
-                exam_data['is_favorite'] = is_favorite
-
-                # 시험 정보를 exam_list에 추가
-                exam_list.append(exam_data)
-
-            except Exam.DoesNotExist:
-                pass  # 해당 ID에 해당하는 시험이 없는 경우 무시
-
-        # 최종적으로 시험 정보 리스트를 반환
-        return Response(exam_list, status=status.HTTP_200_OK)
+        # 시험들의 리스트 반환
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": exam_list
+        }
+        # status 예외처리는 어디서 어떻게 해주나..
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 
@@ -71,7 +65,7 @@ class ExamFavoriteView(APIView):
 
         return response(response_data, status=status.HTTP_200_OK)
 
-class ExamDetail(APIView):
+class ExamPlan(APIView):
     # def get(self, request, *args, **kwargs):
     #     # 예시: URL 파라미터에서 필터링 조건을 받아옴
     #     filter_param = request.GET.get('filter_param')
