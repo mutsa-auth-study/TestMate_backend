@@ -1,8 +1,12 @@
 from rest_framework import generics
 #from rest_framework import mixins
+#from rest_framework import viewsets
+from uuid import UUID
 
-from .models import LocationComment, LocationInfo #모델
-from .serializers import LocationCommentSerializer, LocationInfoSerializer #시리얼라이저
+from .models import LocationComment, LocationInfo # 모델
+from .serializers import LocationCommentSerializer, LocationInfoSerializer # 시리얼라이저
+#from .permissions import CustomReadOnly # 권한 -> 근데 이거 안쓰고 drf에서 제공하는 permissions 쓰면 될듯
+from rest_framework import permissions # 로그인 권한
 
 from rest_framework.views import Response, status
 from rest_framework.views import APIView
@@ -12,15 +16,6 @@ import xml.etree.ElementTree as ET
 import requests
 from rest_framework.generics import get_object_or_404
 
-
-# 고사장 리뷰 작성 [POST][/location/comment]
-class createLocationComment(APIView):
-    def post(self, request,*args, **kwargs):
-        serializer = LocationCommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 고사장 리뷰 조회 [GET][/location/comment/<uuid:location_id>] #location_id는 고사장 id
 class getLocationComment(APIView):
@@ -39,8 +34,48 @@ class getLocationComment(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+# 고사장 리뷰 작성 [POST][/location/comment]
+class createLocationComment(APIView):
 
-# 고사장 리뷰 수정 [PATCH][/location/comment/<uuid:location_id>] #location_id는 고사장 id
+    # 로그인한 사용자만 접근 가능
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request,*args, **kwargs):
+        serializer = LocationCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 고사장 리뷰 수정 [PATCH][/location/comment]
+class updateLocationComment(APIView):
+
+    # 로그인한 사용자만 접근 가능
+    permission_classes = [permissions.IsAuthenticated]
+
+    # 게시물이 존재하는지 확인하는 메소드
+    # 존재한다면 -> 해당 게시물 가져옴 / 존재하지 않는다면 -> None 반환
+    # 메인 로직에서는 객체가 None인지만 확인하면 됨
+    def get_object(self, user_id, location_id):
+        try:
+            return LocationComment.objects.get(user_id=user_id, location_id=location_id)
+        except LocationComment.DoesNotExist:
+            return None
+    def patch(self, request, user_id, location_id, *args, **kwargs):
+        comment = self.get_object(user_id,location_id)
+        if comment is None:
+            return Response({"error": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
+        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
+            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = LocationCommentSerializer(comment, data=request.data, partial=True) 
+        # partial=True로 설정하여 부분 수정 가능
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
 # 고사장 리뷰 삭제 [DELETE][/location/comment/<uuid:location_id>] #location_id는 고사장 id
 
