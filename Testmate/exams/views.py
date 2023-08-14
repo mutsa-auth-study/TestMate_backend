@@ -1,13 +1,15 @@
 from rest_framework import generics
 from rest_framework import mixins
 
-from .models import Exam, ExamPlan, ExamFavorite
-from .serializers import ExamTotalSerializer, ExamDetailSerializer
+from .models import Exam, ExamPlan, ExamFavorite, ExamRecent
+from .serializers import ExamTotalSerializer, ExamDetailSerializer, ExamRecentSerializer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework import permissions
+from django.shortcuts import get_list_or_404
 import uuid
 
 import xml.etree.ElementTree as ET
@@ -180,12 +182,41 @@ class ExamDetail(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    # 최근조회 시험 db에 넣는 로직 추가 [POST]
-    
+
+    # 사용자가 시험을 조회했을 때, 그 정보 DB에 저장하는 로직
+    # 이때, 개수를 체크하고 10개 초과 시 가장 오래된 정보 삭제
+
+    def post(self, request):
+        user_id = request.user.id
+        exam_id = request.data.get('exam_id')
+
+        # 새로운 조회 정보를 저장
+        recent_exam = ExamRecent(user_id=user_id, exam_id=exam_id)
+        recent_exam.save()
+
+        # 현재 저장된 조회 정보의 개수 체크
+        count = ExamRecent.objects.filter(user_id=user_id).count()
+
+        # 10개 초과하는 경우 가장 오래된 정보 삭제
+        if count > 10:
+            oldest_exam = ExamRecent.objects.filter(user_id=user_id).earliest("recent_id")
+            oldest_exam.delete()
+
+        return Response({"message:": "Success"}, status=status.HTTP_201_CREATED)
+
+
 # 최근조회 시험 조회 [GET] [exam/recent]
-class RecentExamView(APIView):
-    # 현재 저장된 조회 정보의 개수 확인
-    # 제한된 개수에 도달했는지 확인
-    # 도달했다면, recent_id 값이 가장 낮은 조회 정보 삭제
-    # 새로운 조회 정보 추가
-    pass
+class RecentExamListView(APIView):
+    # 인증
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # user_id를 인증된 사용자로부터 얻음
+        user_id = request.user.id
+
+        # 가장 최근 조회한 10개 정보 가져오기
+        recent_exams = get_list_or_404(ExamRecent, user_id=user_id)[:10]
+
+        # 시리얼라이저를 통해 JSON으로 변환
+        serializer = ExamRecentSerializer(recent_exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
