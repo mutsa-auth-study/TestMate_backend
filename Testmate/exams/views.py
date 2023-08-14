@@ -1,6 +1,3 @@
-from rest_framework import generics
-from rest_framework import mixins
-
 from .models import Exam, ExamPlan, ExamFavorite
 from .serializers import ExamTotalSerializer, ExamDetailSerializer
 
@@ -12,88 +9,7 @@ import uuid
 
 import xml.etree.ElementTree as ET
 import requests
-'''
-class ExamTotalAPIMixins(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Exam.objects.all()
-    serializer_class = ExamTotalSerializer
-    # GET 메소드 처리 (전체목록)
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-    
 
-class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    queryset = ExamPlan.objects.all()
-    serializer_class = ExamDetailSerializer
-    lookup_field = 'exam_id'
-    
-    # GET 메소드 처리 (시험ID에 해당하는 1개의 시험 일정 불러옴)
-    def get(self, request,*args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-    '''
-# 시험 정보 전체를 DB에 넣는 class => 이것도 /exam/
-class setExamDB(APIView):
-    permission_classes = [AllowAny]
-
-    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG%2F%2B8nJcLHw%3D%3D"  # 발급받아야 함
-    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"  # 요청 URL
-
-    def post(self, request, *args, **kwargs):
-        params = {"serviceKey": self.decodedKey}    # 
-        response = requests.get(self.endPoint, params=params)
-        root = ET.fromstring(response.content)
-        
-        dict = {}
-        for item in root.findall('.//item'):
-            dict["exam_id"] = uuid.uuid4() #시험id
-            dict["jmcd"] = item.find('jmcd').text #종목코드
-            dict["jmfldnm"] = item.find('jmfldnm').text #종목명
-            dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
-            dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
-            dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
-            dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
-            dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
-            dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
-            dict["seriescd"]= item.find('seriescd').text #계열코드
-            dict["seriesnm"] = item.find('seriesnm').text #계열명
-            serializer = ExamTotalSerializer(data=dict)
-            if serializer.is_valid():
-                serializer.save()
-                print("OK")
-            else:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            
-        return Response(status=status.HTTP_201_CREATED)
-    
-class setExamDB_XML(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        params = {"serviceKey": self.decodedKey}    # 
-        response = requests.get(self.endPoint, params=params)
-        root = ET.fromstring(response.content)
-        
-        dict = {}
-        for item in root.findall('.//item'):
-            dict["exam_id"] = uuid.uuid4 #시험id
-            dict["jmcd"] = item.find('jmcd').text #종목코드
-            dict["jmfldnm"] = item.find('jmfldnm').text #종목명
-            dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
-            dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
-            dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
-            dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
-            dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
-            dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
-            dict["seriescd"]= item.find('seriescd').text #계열코드
-            dict["seriesnm"] = item.find('seriesnm').text #계열명
-            serializer = ExamTotalSerializer(data=Exam)
-            if serializer.is_valid():
-                serializer.save()
-                print("OK")
-            else:
-                print("not")
-            
-        return Response(status=status.HTTP_201_CREATED)
-    
 # 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공 => exam_list로 수정(반복문)
 class ExamInfoView(APIView):
     permission_classes = [AllowAny]
@@ -130,7 +46,7 @@ class ExamInfoView(APIView):
                 pass  # 해당 ID에 해당하는 시험이 없는 경우 무시
 
         # 최종적으로 시험 정보 리스트를 반환
-        return response(exam_list, status=status.HTTP_200_OK)
+        return Response(exam_list, status=status.HTTP_200_OK)
 
 
 
@@ -220,3 +136,85 @@ class ExamDetail(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+'''
+# 호출은 되지만 xml 읽기에 실패하는듯. 아래에 파일 직접 읽어서 성공함.
+class setExamDB(APIView):
+    permission_classes = [AllowAny]
+
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG%2F%2B8nJcLHw%3D%3D"  # 발급받아야 함
+    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"  # 요청 URL
+
+    def post(self, request, *args, **kwargs):
+        params = {"serviceKey": self.decodedKey}    # 
+        response = requests.get(self.endPoint, params=params)
+        root = ET.fromstring(response.content)
+        
+        for item in root.findall('.//item'):
+            dict = {}
+            dict["exam_id"] = uuid.uuid4() #시험id
+            dict["jmcd"] = item.find('jmcd').text #종목코드
+            dict["jmfldnm"] = item.find('jmfldnm').text #종목명
+            dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
+            dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
+            dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
+            dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
+            dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
+            dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
+            dict["seriescd"]= item.find('seriescd').text #계열코드
+            dict["seriesnm"] = item.find('seriesnm').text #계열명
+            serializer = ExamTotalSerializer(data=dict)
+            if serializer.is_valid():
+                serializer.save()
+                print("OK")
+            else:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            
+        return Response(status=status.HTTP_201_CREATED)
+
+# 성공한 클래스
+class setExamDB_XML(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        root = ET.parse('examList.xml')
+        
+        for item in root.findall('.//item'):
+            dict = {}
+            dict["exam_id"] = uuid.uuid4 #시험id
+            dict["jmcd"] = item.find('jmcd').text #종목코드
+            dict["jmfldnm"] = item.find('jmfldnm').text #종목명
+            dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
+            dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
+            dict["seriescd"]= item.find('seriescd').text #계열코드
+            dict["seriesnm"] = item.find('seriesnm').text #계열명
+
+            dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
+            dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
+            dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
+            dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
+            serializer = ExamTotalSerializer(data=dict)
+            if serializer.is_valid():
+                serializer.save()
+                print("OK")
+            else:
+                print("not")
+            
+            
+            
+        return Response(status=status.HTTP_201_CREATED)
+   
+
+class deleteExamDB_XML(APIView):
+    permission_classes = [AllowAny] 
+
+    def delete(self, request, *args, **kwargs):
+        root = ET.parse('examList.xml')
+        
+        for item in root.findall('.//item'):
+            data = Exam.objects.filter(jmcd = item.find('jmcd').text)
+            for i in data:
+                i.delete()
+                print("del")
+            
+        # return Response(status=status.HTTP_201_CREATED)
+'''
