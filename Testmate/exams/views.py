@@ -67,9 +67,9 @@ class setExamDB(APIView):
         serializer = ExamTotalSerializer(data=Exam)
         if serializer.is_valid():
             serializer.save()   # 데이터 베이스에 저장
-            return response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 # 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
@@ -91,7 +91,7 @@ class ExamInfoView(APIView):
         exam_data = serializer.data  # 시리얼라이즈된 데이터 가져오기
         exam_data['is_favorite'] = is_favorite # 위에서 조건문 처리한 is_favorite을 exam_data에 추가로 넣어줌
 
-        return response(exam_data, status=status.HTTP_200_OK)
+        return Response(exam_data, status=status.HTTP_200_OK)
 
 # 내가 이해한 바로는 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는거만 시험 전체 테이블에서 뽑아서 반환?
 
@@ -113,7 +113,7 @@ class ExamFavoriteView(APIView):
             "information": [{"exam_id": exam.id} for exam in favorite_exams]
         }
 
-        return response(response_data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 class ExamDetail(APIView):
     # def get(self, request, *args, **kwargs):
@@ -180,3 +180,12 @@ class ExamDetail(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    # 최근조회 시험 db에 넣는 로직 추가 [POST]
+    
+# 최근조회 시험 조회 [GET] [exam/recent]
+class RecentExamView(APIView):
+    # 현재 저장된 조회 정보의 개수 확인
+    # 제한된 개수에 도달했는지 확인
+    # 도달했다면, recent_id 값이 가장 낮은 조회 정보 삭제
+    # 새로운 조회 정보 추가
+    pass

@@ -45,6 +45,8 @@ class ExamFavorite(models.Model):
 
 
 class ExamRecent(models.Model):
-    recent_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    recent_id = models.AutoField(primary_key=True)
+    # UUID는 명확한 시간 순서 보장X -> AutoField로 변경 - 자동 증가 정수
+    #recent_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     exam_id = models.ForeignKey(Exam, on_delete=models.CASCADE, null=False ) # Exam class의 기본키 참조
     # user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..
