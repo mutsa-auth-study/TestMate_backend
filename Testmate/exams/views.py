@@ -67,9 +67,9 @@ class setExamDB(APIView):
         serializer = ExamTotalSerializer(data=Exam)
         if serializer.is_valid():
             serializer.save()   # 데이터 베이스에 저장
-            return response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공 => exam_list로 수정(반복문)
 class ExamInfoView(APIView):
@@ -107,30 +107,34 @@ class ExamInfoView(APIView):
                 pass  # 해당 ID에 해당하는 시험이 없는 경우 무시
 
         # 최종적으로 시험 정보 리스트를 반환
-        return response(exam_list, status=status.HTTP_200_OK)
+        return Response(exam_list, status=status.HTTP_200_OK)
 
-
-
-# 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보들을 시험 전체 테이블에서 뽑아서 반환?
+# ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
 class ExamFavoriteView(APIView):
 
     def get(self, request):
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         user_id = request.user.id
 
         # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
         favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
 
-        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 뽑아서 응답
+        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 가져와서 리스트로 반환
         favorite_exams = Exam.objects.filter(id__in=favorite_exam_ids)
-        # serializer = ExamTotalSerializer(favorite_exams, many=True)
 
-        # 응답 형식에 맞게 구성
-        response_data = {   # 오류 status로 반환, # ExamTotalSerializer 살리기..
-            "check": True,
-            "information": [{"exam_id": exam.id} for exam in favorite_exams]
-        }
+        exam_list = []
+        for exam in favorite_exams:
+            exam_data = ExamTotalSerializer(exam).data  # 시험 시리얼라이징
 
-        return response(response_data, status=status.HTTP_200_OK)
+            # is_favorite 값을 모두 True로 설정
+            exam_data['is_favorite'] = True
+
+            exam_list.append(exam_data)
+
+        return Response(exam_list, status=status.HTTP_200_OK)
+
 
 class ExamDetail(APIView):
     # def get(self, request, *args, **kwargs):
