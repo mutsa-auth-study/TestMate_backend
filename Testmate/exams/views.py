@@ -5,7 +5,11 @@ from .models import Exam, ExamPlan, ExamFavorite
 from .serializers import ExamTotalSerializer, ExamDetailSerializer
 
 from rest_framework.views import APIView
-from rest_framework import response, status
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+import uuid
+
 import xml.etree.ElementTree as ET
 import requests
 '''
@@ -28,6 +32,8 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
     '''
 # 시험 정보 전체를 DB에 넣는 class => 이것도 /exam/
 class setExamDB(APIView):
+    permission_classes = [AllowAny]
+
     decodedKey = "YOUR_DECODED_SERVICE_KEY"  # 발급받아야 함
     endPoint = "YOUR_API_ENDPOINT_URL"  # 요청 URL
 
@@ -68,6 +74,7 @@ class setExamDB(APIView):
 
 # 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
 class ExamInfoView(APIView):
+    permission_classes = [AllowAny]
     
     def get(self, request, some_exam_id): # exam_id는 프론트에서 다 넘겨줘야할 듯..? => is_favorite을 채우려면
         exam = Exam.objects.get(pk=some_exam_id)  # 해당 exam_id의 특정 Exam 객체를 가져옴 => some_exam_id
@@ -121,6 +128,8 @@ class ExamDetail(APIView):
     #     serializer = YourModelSerializer(queryset, many=True)
     #     return Response(serializer.data, status=status.HTTP_200_OK)
 
+    permission_classes = [AllowAny]
+
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
     # 시험 일정
@@ -128,8 +137,8 @@ class ExamDetail(APIView):
 
     def get(self, request, *args, **kwargs):
         def callAPI(qualgbCd, jmCd):
-            qualgbCd = request_data['qualgbCd']
-            jmCd = request_data['jmCd']
+            # qualgbCd = request_data['qualgbCd']
+            # jmCd = request_data['jmCd']
             params = {"serviceKey": self.decodedKey,
             "implYy": "2023",
             "qualgbCd": qualgbCd, #request
@@ -142,6 +151,9 @@ class ExamDetail(APIView):
             root = ET.fromstring(response.content)
             dict = {}
             for item in root.findall('.//item'):
+                dict["implYy"] = item.find('implYy').text
+                dict["implSeq"] = item.find('implSeq').text
+                # dict["exam_id"] = "exam_id"
                 dict["description"] = item.find('description').text
                 dict["docRegStartDt"] = item.find('docRegStartDt').text
                 dict["docRegEndDt"] = item.find('docRegEndDt').text
@@ -153,19 +165,18 @@ class ExamDetail(APIView):
                 dict["pracExamStartDt"] = item.find('pracExamStartDt').text
                 dict["pracExamEndDt"] = item.find('pracExamEndDt').text
                 dict["pracPassDt"] = item.find('pracPassDt').text
-            
             return dict
 
         request_data = request.data
         # additional_info = request.META.get('HTTP_X_ADDITIONAL_INFO', None)  # 예시로 요청 헤더에서 추가 정보를 가져옴
-        examPlan = callAPI(request_data["qualgbCd"], request_data["jmCd"])
-        examPlan["exam_id"] = request_data["exam_id"]
+        examPlan = callAPI(request_data.get("qualgbCd"), request_data.get("jmCd"))
+        # examPlan["exam_id"] = request_data["exam_id"]
 
         serializer = ExamDetailSerializer(data=examPlan)
         
         if serializer.is_valid():
-            serializer.save()  # 데이터베이스에 저장
-            return response(serializer.data, status=status.HTTP_201_CREATED)
+            # serializer.save()  # 데이터베이스에 저장
+            return Response(serializer.data, status=status.HTTP_200_OK)
         
-        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
