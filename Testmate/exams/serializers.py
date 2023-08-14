@@ -11,4 +11,4 @@ class ExamTotalSerializer(serializers.ModelSerializer):
 class ExamDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamPlan
-        fields = ("exam_plan_id","exam_id","implYy","implSeq","description", "docRegStartDt", "dogRegEndDt", "docExamStartDt", "docExamEndDt", "docPassDt", "pracRegStartDt", "pracRegEndDt", "pracExamStartDt", "pracExamEndDt", "pracPassDt")
+        fields = ("exam_plan_id","exam_id","implYy","implSeq","description", "docRegStartDt", "docRegEndDt", "docExamStartDt", "docExamEndDt", "docPassDt", "pracRegStartDt", "pracRegEndDt", "pracExamStartDt", "pracExamEndDt", "pracPassDt")
