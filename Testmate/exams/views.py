@@ -1,16 +1,17 @@
-from .models import Exam, ExamPlan, ExamFavorite
-from .serializers import ExamTotalSerializer, ExamDetailSerializer
+from .models import Exam, ExamPlan, ExamFavorite, ExamRecent
+from .serializers import ExamTotalSerializer, ExamDetailSerializer, ExamRecentSerializer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework import permissions
+from django.shortcuts import get_list_or_404
 import uuid
 
 import xml.etree.ElementTree as ET
 import requests
 
-# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
 class ExamList(APIView):
     permission_classes = [AllowAny]
     
@@ -41,29 +42,71 @@ class ExamList(APIView):
         }
         # status 예외처리는 어디서 어떻게 해주나..
         return Response(response_data, status=status.HTTP_200_OK)
+      
 
-
-
-# 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보들을 시험 전체 테이블에서 뽑아서 반환?
-class ExamFavoriteView(APIView):
+# ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
+class ExamFavoriteGet(APIView):
 
     def get(self, request):
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         user_id = request.user.id
 
         # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
         favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
 
-        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 뽑아서 응답
+        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 가져와서 리스트로 반환
         favorite_exams = Exam.objects.filter(id__in=favorite_exam_ids)
-        # serializer = ExamTotalSerializer(favorite_exams, many=True)
 
-        # 응답 형식에 맞게 구성
-        response_data = {   # 오류 status로 반환, # ExamTotalSerializer 살리기..
-            "check": True,
-            "information": [{"exam_id": exam.id} for exam in favorite_exams]
-        }
+        exam_list = []
+        for exam in favorite_exams:
+            exam_data = ExamTotalSerializer(exam).data  # 시험 시리얼라이징
 
-        return response(response_data, status=status.HTTP_200_OK)
+            # is_favorite 값을 모두 True로 설정
+            exam_data['is_favorite'] = True
+
+            exam_list.append(exam_data)
+
+        return Response(exam_list, status=status.HTTP_200_OK)
+
+# 즐겨찾기 시험 정보 등록(post)
+class ExamFavoritePost(APIView):
+    def post(self, request):
+        user_id = request.user.id
+
+        # 현재 즐겨찾기한 시험 ID 개수 확인
+        favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
+
+        # 즐겨찾기한 시험 개수가 5개 이상이면 실패 응답 반환
+        if favorite_count >= 5:
+            return Response({"detail": "You can only add up to 5 exams to favorites."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 요청 데이터에서 즐겨찾기할 시험 ID 리스트 가져오기
+        exam_ids = request.data.get('exam_ids', [])
+
+        # 요청 데이터에 exam_ids가 없으면 실패 응답 반환
+        if not exam_ids:
+            return Response({"detail": "exam_ids are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        added_exam_ids = []
+
+        for exam_id in exam_ids:
+            # 이미 즐겨찾기한 시험인지 확인 후 추가
+            if not ExamFavorite.objects.filter(user_id=user_id, exam_id=exam_id).exists():
+                added_exam_ids.append(exam_id)
+
+        # 추가된 시험 ID 리스트를 응답으로 반환 => 맞나..?
+        return Response({"information": [{"exam_id": exam_id} for exam_id in added_exam_ids]}, status=status.HTTP_201_CREATED)
+
+
+# 즐겨찾기 시험 정보 삭제(delete)
+# class ExamFavoriteDelete(APIView):
+
+
+
+
+
 
 class ExamPlan(APIView):
     # def get(self, request, *args, **kwargs):
@@ -130,6 +173,46 @@ class ExamPlan(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+    # 사용자가 시험을 조회했을 때, 그 정보 DB에 저장하는 로직
+    # 이때, 개수를 체크하고 10개 초과 시 가장 오래된 정보 삭제
+
+    def post(self, request):
+        user_id = request.user.id
+        exam_id = request.data.get('exam_id')
+
+        # 새로운 조회 정보를 저장
+        recent_exam = ExamRecent(user_id=user_id, exam_id=exam_id)
+        recent_exam.save()
+
+        # 현재 저장된 조회 정보의 개수 체크
+        count = ExamRecent.objects.filter(user_id=user_id).count()
+
+        # 10개 초과하는 경우 가장 오래된 정보 삭제
+        if count > 10:
+            oldest_exam = ExamRecent.objects.filter(user_id=user_id).earliest("recent_id")
+            oldest_exam.delete()
+
+        return Response({"message:": "Success"}, status=status.HTTP_201_CREATED)
+
+
+# 최근조회 시험 조회 [GET] [exam/recent]
+class RecentExamListView(APIView):
+    # 인증
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # user_id를 인증된 사용자로부터 얻음
+        user_id = request.user.id
+
+        # 가장 최근 조회한 10개 정보 가져오기
+        recent_exams = get_list_or_404(ExamRecent, user_id=user_id)[:10]
+
+        # 시리얼라이저를 통해 JSON으로 변환
+        serializer = ExamRecentSerializer(recent_exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 '''
 # 호출은 되지만 xml 읽기에 실패하는듯. 아래에 파일 직접 읽어서 성공함.
 class setExamDB(APIView):

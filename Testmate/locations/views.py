@@ -2,6 +2,7 @@ from rest_framework import generics
 #from rest_framework import mixins
 #from rest_framework import viewsets
 from uuid import UUID
+from django.views import View
 
 from .models import LocationComment, LocationInfo # 모델
 from .serializers import LocationCommentSerializer, LocationInfoSerializer # 시리얼라이저
@@ -15,10 +16,12 @@ from rest_framework import response, status
 import xml.etree.ElementTree as ET
 import requests
 from rest_framework.generics import get_object_or_404
-
+from rest_framework.permissions import AllowAny
 
 # 고사장 리뷰 조회 [GET][/location/comment/<uuid:location_id>] #location_id는 고사장 id
 class getLocationComment(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request, *args, **kwargs):
         location_id = kwargs.get('location_id')
         locationComment = LocationComment.objects.filter(location_id=location_id)
@@ -36,7 +39,7 @@ class getLocationComment(APIView):
 
 # 고사장 리뷰 작성 [POST][/location/comment]
 class createLocationComment(APIView):
-
+    
     # 로그인한 사용자만 접근 가능
     permission_classes = [permissions.IsAuthenticated]
 
@@ -155,3 +158,21 @@ class setLocationDB(APIView):
             return response(serializer.data, status=status.HTTP_201_CREATED)
         
         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# POST PATCH DELETE는 URL 동일 [location/comment/]
+# 따라서 같은 클래스 내에 위치해야함
+# 여러 HTTP 메소드를 한 클래스 내에서 다루기 위해 중앙 뷰 생성
+class MainLocationCommentView(APIView) :
+    
+    # 로그인한 사용자만 접근 가능
+    # 클래스 레벨에서 접근 권한 적용하기 위해 다시 작성
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        return createLocationComment.as_view()(request, *args, **kwargs)
+    
+    def patch(self, request, user_id, location_id, *args, **kwargs):
+        return updateLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
+    
+    def delete(self, request, user_id, location_id, *args, **kwargs):
+        return deleteLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
