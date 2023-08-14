@@ -26,15 +26,15 @@ class ExamDetailAPIMixins(mixins.RetrieveModelMixin, generics.GenericAPIView):
     def get(self, request,*args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
     '''
-# 시험 정보 DB에 넣는 class
+# 시험 정보 전체를 DB에 넣는 class => 이것도 /exam/
 class setExamDB(APIView):
     decodedKey = "YOUR_DECODED_SERVICE_KEY"  # 발급받아야 함
     endPoint = "YOUR_API_ENDPOINT_URL"  # 요청 URL
 
     def get(self, request, *args, **kwargs):
 
-        def callAPI():
-            params = {"serviceKey": self.decodedKey}
+        def callAPI():  # 파라미터 없음..
+            params = {"serviceKey": self.decodedKey}    # 
             response = requests.get(self.endPoint, params=params)
             root = ET.fromstring(response.content)
             
@@ -60,92 +60,53 @@ class setExamDB(APIView):
 
         serializer = ExamTotalSerializer(data=Exam)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save()   # 데이터 베이스에 저장
             return response(serializer.data, status=status.HTTP_201_CREATED)
         
         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-# # /exam/favorite/
-# class ExamFavorite(APIView):
-#     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
-#     # 시험정보를 조회하는 API의 엔트포인트 주소
-#     endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC/getList"
-
-#     def get(self,request, *args, **kwargs):
-#         # 로그인된 사용자의 user_id 가져오기
-#         user_id = request.user_id
-#         # def callAPI(user):
-#         #     params = {"serviceKey": self.decodedKey}
-#         #     response = requests.get(self.endPoint, params=params)
-#         #     root = ET.fromstring(response.content)
-#         #     dict = {}
-#         #     for item in root.findall('.//item'):
-#         #         dict["jmcd"] = item.find('jmcd').text #종목코드
-#         #         dict["jmfldnm"] = item.find('jmfldnm').text #종목명
-#         #         dict["mdobligfldcd"] = item.find('mdobligfldcd').text #중직무분야코드
-#         #         dict["mdobligfldnm"]= item.find('mdobligfldnm').text #중직무분야명
-#         #         dict["obligfldcd"] = item.find('obligfldcd').text #대직무분야코드
-#         #         dict["obligfldnm"] = item.find('obligfldnm').text #대직무분야명
-#         #         dict["qualgbcd"] = item.find('qualgbcd').text #자격구분
-#         #         dict["qualgbnm"] = item.find('qualgbnm').text #자격구분명
-#         #         dict["seriescd"]= item.find('seriescd').text #계열코드
-#         #         dict["seriesnm"] = item.find('seriesnm').text #계열명
-#         def callAPI(user_id):
-#             # 이 지점부터 조건문 사용해서 user_id가 있으면 즉, 로그인 되었으면 처리를 해줘야할 것 같기도..?
-#             params = {"serviceKey": self.decodedKey} # API 호출을 위한 파라미터 설정
-#             response = requests.get(self.endPoint, params=params) # API 호출 및 응답 받기
-#             root = ET.fromstring(response.content) # XML 응답을 파싱해 데이터 추출
-#             data_list = []
-
-#             # API 응답에서 시험정보 추출해서 리스트에 저장
-#             for item in root.findall('.//item'):
-#                 data = {
-#                     "jmcd": item.find('jmcd').text,
-#                     "jmfldnm": item.find('jmfldnm').text,
-#                     "mdobligfldnm": item.find('mdobligfldnm').text,
-#                     "obligfldnm": item.find('obligfldnm').text,
-#                     "qualgbcd": item.find('qualgbcd').text,
-#                     "qualgbnm": item.find('qualgbnm').text,
-#                     "seriesnm": item.find('seriesnm').text,
-#                 }
-#                 data["user_id"] = user_id  # user_id 추가
-#                 data_list.append(data)
-
-#             return data_list  
-        
-        
-#         request_data = request.data # 요청 데이터를 가져옴
-#         exam_favorite = callAPI(request_data["user_id"])    # 사용자가 즐찾한 시험정보 호출..?
-
-#         serializer = ExamTotalSerializer(data = exam_favorite)
-#         if serializer.is_valid():
-#             serializer.save() # 데이터베이스에 저장
-#             return response(serializer.data, status=status.HTTP_201_CREATED)
-        
-#         # 시리얼라이저가 유효하지 않으면 에러 응답 반환
-#         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# /exam/ 시험 전체 목록을 제공하는 API입니다. => 로그인 시 각 시험의 즐겨찾기 여부도 제공
+# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
 class ExamInfoView(APIView):
     
-    def get(self, request, some_exam_id): # exam_id는 프론트에서 다 넘겨줘야할듯..? -> is_favorite을 채우려면
-        exam = Exam.objects.get(pk=some_exam_id)  # 해당 exam_id의 Exam 객체를 가져옴
-        user_id = request.data.get('user_id')
+    def get(self, request, some_exam_id): # exam_id는 프론트에서 다 넘겨줘야할 듯..? => is_favorite을 채우려면
+        exam = Exam.objects.get(pk=some_exam_id)  # 해당 exam_id의 특정 Exam 객체를 가져옴 => some_exam_id
+        # user_id = request.data.get('user_id')
         if request.user.is_authenticated:
             # 로그인한 사용자
-            # ExamFavorite 클래스에서 user_id와 exam_id를 확인
-            is_favorite_exists = ExamFavorite.objects.filter(user=request.user, exam_id=some_exam_id).exists()
-            is_favorite = True if is_favorite_exists else False
+            # ExamFavorite 모델에서 user_id와 exam_id 확인하여 즐겨찾기 여부를 판단
+            is_favorite = ExamFavorite.objects.filter(user=request.user, exam_id=some_exam_id).exists()
         else:
             # 로그인하지 않은 사용자
             is_favorite = None
 
         serializer = ExamTotalSerializer(exam)  # Exam 객체를 시리얼라이징
         exam_data = serializer.data  # 시리얼라이즈된 데이터 가져오기
+        exam_data['is_favorite'] = is_favorite # 위에서 조건문 처리한 is_favorite을 exam_data에 추가로 넣어줌
 
         return response(exam_data, status=status.HTTP_200_OK)
+
+# 내가 이해한 바로는 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는거만 시험 전체 테이블에서 뽑아서 반환?
+
+class ExamFavoriteView(APIView):
+
+    def get(self, request):
+        user_id = request.user.id
+
+        # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
+        favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+
+        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 뽑아서 응답
+        favorite_exams = Exam.objects.filter(id__in=favorite_exam_ids)
+        # serializer = ExamTotalSerializer(favorite_exams, many=True)
+
+        # 응답 형식에 맞게 구성
+        response_data = {
+            "check": True,
+            "information": [{"exam_id": exam.id} for exam in favorite_exams]
+        }
+
+        return response(response_data, status=status.HTTP_200_OK)
 
 class ExamDetail(APIView):
     # def get(self, request, *args, **kwargs):
