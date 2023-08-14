@@ -43,6 +43,113 @@ class ExamList(APIView):
         # status 예외처리는 어디서 어떻게 해주나..
         return Response(response_data, status=status.HTTP_200_OK)
       
+class ExamDetail(APIView):
+    permission_classes = [AllowAny]
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
+
+    # 시험 일정
+    endPoint = "http://apis.data.go.kr/B490007/qualExamSchd/getQualExamSchdList"
+
+    def post(self, request, *args, **kwargs):
+        examID = kwargs.get("exam_id")
+
+        # 로그인 된 경우 최근 본 시험 데이터 등록
+        if request.user.is_authenticated:
+            userID = request.user.id
+            recent_data = {}
+            recent_data["user_id"] = userID
+            recent_data["exam_id"] = examID
+
+            # 새로운 조회 정보를 저장
+            serializer = ExamRecentSerializer(data=recent_data)
+            if serializer.is_valid():
+                serializer.save()  # 데이터베이스에 저장
+
+            # 현재 저장된 조회 정보의 개수 체크
+            count = ExamRecent.objects.filter(user_id=userID).count()
+
+            # 10개 초과하는 경우 가장 오래된 정보 삭제
+            if count > 10:
+                oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
+                oldest_exam.delete()
+
+        # DB에서 해당 시험 일정 저장된 것 있는지 확인
+        db = ExamPlan.objects.filter(exam_id=examID)
+        if len(db):
+            print("중복")
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "information": list(db.values())
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # DB에 없으면 API 호출
+        request_data = request.data
+        params = {"serviceKey": self.decodedKey,
+            "implYy": "2023",
+            "qualgbCd": request_data.get("qualgbCd"), #request
+            "jmCd": request_data.get("jmCd"), #request
+            "numOfRows": "10", #임시로 10으로 해놓음. 여러개중 하나 어케 고르지..
+            "pageNo": "1",
+            "dataFormat": "xml"
+            }
+        response = requests.get(self.endPoint, params=params)
+        root = ET.fromstring(response.content)
+
+        plan = []
+        for item in root.findall('.//item'):
+            dict = {}
+            dict["implYy"] = item.find('implYy').text
+            dict["implSeq"] = item.find('implSeq').text
+            dict["description"] = item.find('description').text
+            dict["docRegStartDt"] = item.find('docRegStartDt').text
+            dict["docRegEndDt"] = item.find('docRegEndDt').text
+            dict["docExamStartDt"] = item.find('docExamStartDt').text
+            dict["docExamEndDt"] = item.find('docExamEndDt').text
+            dict["docPassDt"] = item.find('docPassDt').text
+            dict["pracRegStartDt"] = item.find('pracRegStartDt').text
+            dict["pracRegEndDt"] = item.find('pracRegEndDt').text
+            dict["pracExamStartDt"] = item.find('pracExamStartDt').text
+            dict["pracExamEndDt"] = item.find('pracExamEndDt').text
+            dict["pracPassDt"] = item.find('pracPassDt').text
+            dict["exam_id"] = examID
+
+            serializer = ExamDetailSerializer(data=dict)
+            if serializer.is_valid():
+                serializer.save()  # 데이터베이스에 저장
+            plan.append(dict)
+        
+        response_data = {
+                "status": status.HTTP_200_OK,
+                "information": plan
+            }
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+'''
+    # 사용자가 시험을 조회했을 때, 그 정보 DB에 저장하는 로직
+    # 이때, 개수를 체크하고 10개 초과 시 가장 오래된 정보 삭제
+
+    def post(self, request):
+        user_id = request.user.id
+        exam_id = request.data.get('exam_id')
+
+        # 새로운 조회 정보를 저장
+        recent_exam = ExamRecent(user_id=user_id, exam_id=exam_id)
+        recent_exam.save()
+
+        # 현재 저장된 조회 정보의 개수 체크
+        count = ExamRecent.objects.filter(user_id=user_id).count()
+
+        # 10개 초과하는 경우 가장 오래된 정보 삭제
+        if count > 10:
+            oldest_exam = ExamRecent.objects.filter(user_id=user_id).earliest("recent_id")
+            oldest_exam.delete()
+
+        return Response({"message:": "Success"}, status=status.HTTP_201_CREATED)
+'''
+    
 
 # ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
 class ExamFavoriteGet(APIView):
@@ -108,92 +215,6 @@ class ExamFavoritePost(APIView):
 
 
 
-class ExamPlan(APIView):
-    # def get(self, request, *args, **kwargs):
-    #     # 예시: URL 파라미터에서 필터링 조건을 받아옴
-    #     filter_param = request.GET.get('filter_param')
-
-    #     if filter_param:
-    #         queryset = YourModel.objects.filter(some_field=filter_param)
-    #     else:
-    #         queryset = YourModel.objects.all()
-
-    #     serializer = YourModelSerializer(queryset, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
-    permission_classes = [AllowAny]
-
-    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
-
-    # 시험 일정
-    endPoint = "http://apis.data.go.kr/B490007/qualExamSchd/getQualExamSchdList"
-
-    def get(self, request, *args, **kwargs):
-        def callAPI(qualgbCd, jmCd):
-            # qualgbCd = request_data['qualgbCd']
-            # jmCd = request_data['jmCd']
-            params = {"serviceKey": self.decodedKey,
-            "implYy": "2023",
-            "qualgbCd": qualgbCd, #request
-            "jmCd": jmCd, #request
-            "numOfRows": "1", #임시
-            "pageNo": "1",
-            "dataFormat": "xml"
-            }
-            response = requests.get(self.endPoint, params=params)
-            root = ET.fromstring(response.content)
-            dict = {}
-            for item in root.findall('.//item'):
-                dict["implYy"] = item.find('implYy').text
-                dict["implSeq"] = item.find('implSeq').text
-                # dict["exam_id"] = "exam_id"
-                dict["description"] = item.find('description').text
-                dict["docRegStartDt"] = item.find('docRegStartDt').text
-                dict["docRegEndDt"] = item.find('docRegEndDt').text
-                dict["docExamStartDt"] = item.find('docExamStartDt').text
-                dict["docExamEndDt"] = item.find('docExamEndDt').text
-                dict["docPassDt"] = item.find('docPassDt').text
-                dict["pracRegStartDt"] = item.find('pracRegStartDt').text
-                dict["pracRegEndDt"] = item.find('pracRegEndDt').text
-                dict["pracExamStartDt"] = item.find('pracExamStartDt').text
-                dict["pracExamEndDt"] = item.find('pracExamEndDt').text
-                dict["pracPassDt"] = item.find('pracPassDt').text
-            return dict
-
-        request_data = request.data
-        # additional_info = request.META.get('HTTP_X_ADDITIONAL_INFO', None)  # 예시로 요청 헤더에서 추가 정보를 가져옴
-        examPlan = callAPI(request_data.get("qualgbCd"), request_data.get("jmCd"))
-        # examPlan["exam_id"] = request_data["exam_id"]
-
-        serializer = ExamDetailSerializer(data=examPlan)
-        
-        if serializer.is_valid():
-            # serializer.save()  # 데이터베이스에 저장
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-    # 사용자가 시험을 조회했을 때, 그 정보 DB에 저장하는 로직
-    # 이때, 개수를 체크하고 10개 초과 시 가장 오래된 정보 삭제
-
-    def post(self, request):
-        user_id = request.user.id
-        exam_id = request.data.get('exam_id')
-
-        # 새로운 조회 정보를 저장
-        recent_exam = ExamRecent(user_id=user_id, exam_id=exam_id)
-        recent_exam.save()
-
-        # 현재 저장된 조회 정보의 개수 체크
-        count = ExamRecent.objects.filter(user_id=user_id).count()
-
-        # 10개 초과하는 경우 가장 오래된 정보 삭제
-        if count > 10:
-            oldest_exam = ExamRecent.objects.filter(user_id=user_id).earliest("recent_id")
-            oldest_exam.delete()
-
-        return Response({"message:": "Success"}, status=status.HTTP_201_CREATED)
 
 
 # 최근조회 시험 조회 [GET] [exam/recent]
