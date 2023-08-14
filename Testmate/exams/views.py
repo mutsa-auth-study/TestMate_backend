@@ -71,30 +71,47 @@ class setExamDB(APIView):
         
         return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공
+# 시험 전체 목록을 제공하는 API + 로그인 시 각 시험의 즐겨찾기 여부도 제공 => exam_list로 수정(반복문)
 class ExamInfoView(APIView):
     permission_classes = [AllowAny]
     
-    def get(self, request, some_exam_id): # exam_id는 프론트에서 다 넘겨줘야할 듯..? => is_favorite을 채우려면
-        exam = Exam.objects.get(pk=some_exam_id)  # 해당 exam_id의 특정 Exam 객체를 가져옴 => some_exam_id
-        # user_id = request.data.get('user_id')
+    def get(self, request, some_exam_ids):  # 여러 시험 ID를 리스트로 받음
+        exam_list = []  # 시험 정보를 담을 리스트 초기화
+
         if request.user.is_authenticated:
-            # 로그인한 사용자
-            # ExamFavorite 모델에서 user_id와 exam_id 확인하여 즐겨찾기 여부를 판단
-            is_favorite = ExamFavorite.objects.filter(user=request.user, exam_id=some_exam_id).exists()
+            # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
+            exam_favorites = ExamFavorite.objects.filter(user=request.user)
+            favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
         else:
-            # 로그인하지 않은 사용자
-            is_favorite = None
+            favorite_exam_ids = []  # 로그인하지 않은 사용자의 경우 빈 리스트로 초기화
 
-        serializer = ExamTotalSerializer(exam)  # Exam 객체를 시리얼라이징
-        exam_data = serializer.data  # 시리얼라이즈된 데이터 가져오기
-        exam_data['is_favorite'] = is_favorite # 위에서 조건문 처리한 is_favorite을 exam_data에 추가로 넣어줌
+        for some_exam_id in favorite_exam_ids:
+            try:
+                # 특정 exam_id의 Exam 객체를 가져옴
+                exam = Exam.objects.get(pk=some_exam_id)
 
-        return response(exam_data, status=status.HTTP_200_OK)
+                # is_favorite 값을 항상 True로 설정
+                is_favorite = True
 
-# 내가 이해한 바로는 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는거만 시험 전체 테이블에서 뽑아서 반환?
+                # Exam 객체를 시리얼라이징
+                serializer = ExamTotalSerializer(exam)
+                exam_data = serializer.data  # 시리얼라이즈된 데이터 가져오기
 
+                # is_favorite 속성 추가
+                exam_data['is_favorite'] = is_favorite
+
+                # 시험 정보를 exam_list에 추가
+                exam_list.append(exam_data)
+
+            except Exam.DoesNotExist:
+                pass  # 해당 ID에 해당하는 시험이 없는 경우 무시
+
+        # 최종적으로 시험 정보 리스트를 반환
+        return response(exam_list, status=status.HTTP_200_OK)
+
+
+
+# 로그인한 사용자가 ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보들을 시험 전체 테이블에서 뽑아서 반환?
 class ExamFavoriteView(APIView):
 
     def get(self, request):
@@ -108,7 +125,7 @@ class ExamFavoriteView(APIView):
         # serializer = ExamTotalSerializer(favorite_exams, many=True)
 
         # 응답 형식에 맞게 구성
-        response_data = {
+        response_data = {   # 오류 status로 반환, # ExamTotalSerializer 살리기..
             "check": True,
             "information": [{"exam_id": exam.id} for exam in favorite_exams]
         }
