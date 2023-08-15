@@ -43,11 +43,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "ec2-3-37-74-26.ap-northeast-2.compute.amazonaws.com",
-    ".testmate.o-r.kr"
-    ]
-
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

@@ -47,10 +47,3 @@ class ExamRecent(models.Model):
     # UUID는 명확한 시간 순서 보장X -> AutoField로 변경 : 자동 증가 정수
     exam_id = models.ForeignKey(Exam, on_delete=models.CASCADE, blank=False) # Exam class의 기본키 참조
     # user_id = 로그인된 사용자라 accounts의 모델이 만들어져야 외래키로 가져올 수 있을 듯..
-
-    # def save(self, *args, **kwargs):
-    #     if not self.custom_id:
-    #         # id 필드가 없을 경우, 가장 큰 id 값에 1을 더한 값을 사용
-    #         last_id = ExamRecent.objects.aggregate(models.Max('recent_id'))['recent_id__max']
-    #         self.custom_id = last_id + 1 if last_id is not None else 1
-    #     super(ExamRecent, self).save(*args, **kwargs)

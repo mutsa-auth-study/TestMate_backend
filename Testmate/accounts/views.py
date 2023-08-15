@@ -30,16 +30,7 @@ def kakao_callback(request):
     if email_req_status != 200:
         return JsonResponse({'err_msg': '이메일을 가져오는데 실패했습니다'}, status=status.HTTP_400_BAD_REQUEST)
     email_req_json = email_req.json()
-    userName = email_req_json.get('username')
-    user_id = email_req_json.get('user_id')
-    profile_nickname = email_req_json.get('email')
-    # email = email_req_json.get('email')
-    userInfo = {}
-    userInfo["user_id"] = uuid.uuid()
-    userInfo["username"] = userName
-    userInfo["kakao_id"] = kakao_id
-    userInfo["profile_nickname"] = profile_nickname
-    userInfo["username"] = userName
+    email = email_req_json.get('email')
 
     """
     가입 또는 로그인 요청
@@ -64,11 +55,6 @@ def kakao_callback(request):
         if accept_status != 200:
             return JsonResponse({'err_msg': '가입에 실패했습니다'}, status=accept_status)
         accept_json = accept.json()
-
-        #
-        serializer = UserInfolSerializer(data=userInfo)
-        if serializer.is_valid():
-            serializer.save()  # 데이터베이스에 저장
 
     user = User.objects.get(email=email)
 
