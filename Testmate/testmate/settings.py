@@ -15,6 +15,7 @@ from pathlib import Path
 import json, os
 import sys
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 
 import pymysql
 import environ
@@ -67,7 +68,7 @@ INSTALLED_APPS = [
     'rest_auth',
 
     # app 이름
-    # 'accounts',
+    'accounts',
     'locations',
     'exams',
 
@@ -79,6 +80,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
     'rest_auth.registration',
 
+    'corsheaders',
 ]
 
 SITE_ID = 1
@@ -92,6 +94,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+KAKAO_REDIRECT_URI = env('kakao_redirect_uri')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -107,6 +110,8 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -117,6 +122,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'testmate.urls'
+
+
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000', 'http://localhost:3000']
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + ['x-csrftoken']
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 TEMPLATES = [
     {
@@ -195,3 +207,5 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'accounts.User'

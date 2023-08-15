@@ -21,13 +21,13 @@ urlpatterns = [
     # urls.py
 
     # 로그인
-    # path('account/', include('rest_auth.urls')),
-    # path('account/registration/', include('rest_auth.registration.urls')),
-    # path('account/', include('allauth.urls')),
-    # url(r'account/registration/confirm-email/(?P<key>.+)/$', confirm_email, name='confirm_email'),
-    # path('', include('accounts.urls')),
+    path('accounts/', include('accounts.urls')),
+    # path('accounts/', include('dj_rest_auth.urls')),
+    # path('accounts/', include('dj_rest_auth.registration.urls')),
+    # path('accounts/', include('allauth.urls')),
 
     path('location/', include("locations.urls")),
     path('exam/', include("exams.urls")),
+
 ] 
 
