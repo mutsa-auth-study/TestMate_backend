@@ -56,23 +56,23 @@ def kakao_callback(request):
             return JsonResponse({'err_msg': '가입에 실패했습니다'}, status=accept_status)
         accept_json = accept.json()
 
-        user = User.objects.get(email=email)
+    user = User.objects.get(email=email)
 
     
-        accept_json['user_id'] = user.user_id
-        accept_json['profile_nickname'] = user.profile_nickname
-        accept_json['profile_image'] = user.profile_image.url if user.profile_image.url else None
-        accept_json['email'] = user.email
-        accept_json['accessToken'] = user.accessToken
+    accept_json['user_id'] = user.user_id
+    accept_json['profile_nickname'] = user.profile_nickname
+    accept_json['profile_image'] = user.profile_image.url if user.profile_image.url else None
+    accept_json['email'] = user.email
+    accept_json['accessToken'] = user.accessToken
 
-        accept_json.pop('user', None)
+    accept_json.pop('user', None)
 
-        response_data = {
+    response_data = {
         "status": status.HTTP_200_OK,
         "information": [accept_json]
         }
 
-        return JsonResponse(response_data)
+    return JsonResponse(response_data)
 
 
 class KakaoLogin(SocialLoginView):

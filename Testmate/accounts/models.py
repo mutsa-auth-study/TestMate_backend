@@ -63,8 +63,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.uname or ''
-
+        return self.profile_nickname or ''
+    
     def has_perm(self, perm, obj=None):
         return True
 
