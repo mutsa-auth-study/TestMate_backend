@@ -9,22 +9,22 @@ class CustomUserAdmin(UserAdmin):
     add_form = UserCreationForm
     form = UserChangeForm
 
-    list_display = ('user_id', 'profile_nickname', 'profile_image', 'account_email')
+    list_display = ('user_id', 'profile_nickname', 'profile_image', 'email')
     list_filter = ('is_superuser',)
 
-    fieldsets = (
-        (None, {'fields': ('email', 'password',)}),
-        ('Personal info', {'fields':('user_id', 'profile_nickname', 'profile_image', 'account_email')}),
-        ('Permissions', {'fields': ('is_superuser',)}),
-    )
+    # fieldsets = (
+    #     (None, {'fields': ('email', 'password',)}),
+    #     ('Personal info', {'fields':('user_id', 'profile_nickname', 'profile_image', 'email')}),
+    #     ('Permissions', {'fields': ('is_superuser',)}),
+    # )
 
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('name', 'password1', 'password2')}
-         ),
-    )
-    search_fields = ('account_email',)
+    # add_fieldsets = (
+    #     (None, {
+    #         'classes': ('wide',),
+    #         'fields': ('name', 'password1', 'password2')}
+    #     ),
+    # )
+    search_fields = ('email',)
     ordering = ('user_id',)
     filter_horizontal = ()
 

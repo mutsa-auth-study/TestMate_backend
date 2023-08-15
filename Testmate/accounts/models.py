@@ -52,7 +52,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.CharField('아이디',max_length=20)
     profile_nickname = models.CharField('닉네임', max_length=20, blank =True, null=True)
     profile_image =  models.ImageField('프로필 사진', upload_to=upload_to_func, null=True, blank=True)
-    account_email = models.CharField('이메일', max_length=40, unique=True)
+    email = models.CharField('이메일', max_length=40, unique=True)
 
 
     is_active = models.BooleanField(default=True)

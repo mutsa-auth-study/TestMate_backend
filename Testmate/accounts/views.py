@@ -63,7 +63,7 @@ def kakao_callback(request):
         accept_json['user_id'] = user.user_id
         accept_json['profile_nickname'] = user.profile_nickname
         accept_json['profile_image'] = user.profile_image.url if user.profile_image.url else None
-        accept_json['account_email'] = user.account_email
+        accept_json['email'] = user.email
         accept_json['accessToken'] = user.accessToken
 
         accept_json.pop('user', None)
