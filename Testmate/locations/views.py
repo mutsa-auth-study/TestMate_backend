@@ -12,6 +12,7 @@ from rest_framework import permissions # 로그인 권한
 from rest_framework.views import Response, status
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from .pagination import CustomPageNumberPagination
 from rest_framework import response, status
 import xml.etree.ElementTree as ET
 import requests
@@ -31,7 +32,7 @@ class getLocationComment(APIView):
             return Response({"detail": "Location comment not found"}, status=status.HTTP_404_NOT_FOUND)
         
         # 페이지네이션 적용
-        paginator = PageNumberPagination()
+        paginator = CustomPageNumberPagination()
         paginated_comments = paginator.paginate_queryset(locationComment,request)
         serializer = LocationCommentSerializer(paginated_comments, many=True)
 

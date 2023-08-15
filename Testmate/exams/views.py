@@ -9,6 +9,8 @@ from rest_framework import permissions
 from django.shortcuts import get_list_or_404
 import uuid
 
+from locations.pagination import CustomPageNumberPagination
+
 import xml.etree.ElementTree as ET
 import requests
 
@@ -42,7 +44,16 @@ class ExamList(APIView):
         }
         # status 예외처리는 어디서 어떻게 해주나..
         return Response(response_data, status=status.HTTP_200_OK)
-      
+
+        
+        # 페이지네이션 적용
+        # 일단 주석처리 해놓겠음.
+        paginator = CustomPageNumberPagination()
+        paginated_comments = paginator.paginate_queryset(Exam,request)
+        serializer = ExamTotalSerializer(paginated_comments, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+    
 class ExamDetail(APIView):
     permission_classes = [AllowAny]
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
