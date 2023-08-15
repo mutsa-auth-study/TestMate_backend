@@ -13,7 +13,7 @@ from json.decoder import JSONDecodeError
 # 필요한 모듈 및 클래스를 가져옵니다
 state = getattr(settings, 'STATE')  # Django 설정에서 'STATE' 속성을 가져옵니다
 BASE_URL = 'http://localhost:8000/'  # 애플리케이션의 기본 URL을 정의합니다
-KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/callback/'
+KAKAO_CALLBACK_URI = BASE_URL + 'auth/login/'
 
 def kakao_callback(request):
     """
@@ -21,6 +21,7 @@ def kakao_callback(request):
     """
     # 'Bearer: ' 접두어를 제거하여 액세스 토큰을 추출합니다
     access_token = request.headers.get('Authorization')[7:]
+    print(access_token)
 
     """
     이메일 요청
