@@ -2,18 +2,17 @@ from accounts.models import User
 from allauth.socialaccount.models import SocialAccount
 from django.conf import settings
 from dj_rest_auth.registration.views import SocialLoginView
-from allauth.socialaccount.providers.google import views as google_view
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.http import JsonResponse
 import requests
 from rest_framework import status
 from json.decoder import JSONDecodeError
+from testmate.settings import KAKAO_REDIRECT_URI
 
 # 필요한 모듈 및 클래스를 가져옵니다
-state = getattr(settings, 'STATE')  # Django 설정에서 'STATE' 속성을 가져옵니다
 BASE_URL = 'http://localhost:8000/'  # 애플리케이션의 기본 URL을 정의합니다
-KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/callback/'
+KAKAO_CALLBACK_URI = BASE_URL + KAKAO_REDIRECT_URI
 
 def kakao_callback(request):
     """

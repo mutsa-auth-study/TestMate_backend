@@ -88,6 +88,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+KAKAO_REDIRECT_URI = env('kakao_redirect_uri')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (

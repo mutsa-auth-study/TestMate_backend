@@ -1,7 +1,7 @@
 import os
 from uuid import uuid4
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin   # 사용자 권한 부여
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin,AbstractUser   # 사용자 권한 부여
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils import timezone
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -48,7 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
     
 
-
+    username = models.CharField(max_length=150,default='')
     user_id = models.CharField('아이디',max_length=20)
     profile_nickname = models.CharField('닉네임', max_length=20, blank =True, null=True)
     profile_image =  models.ImageField('프로필 사진', upload_to=upload_to_func, null=True, blank=True)
