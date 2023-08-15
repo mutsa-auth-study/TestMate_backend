@@ -11,7 +11,7 @@ class UserCreationForm(forms.ModelForm):
     class Meta:
         model = User
         # 아래 수정 예정
-        fields = ('user_id', 'profile_nickname', 'profile_image', 'account_email')
+        fields = ('user_id', 'profile_nickname', 'profile_image', 'email')
 
     # 패스워드 일치 검증
     def clean_password2(self):
@@ -35,7 +35,7 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('user_id', 'profile_nickname', 'profile_image', 'account_email', 'is_superuser')
+        fields = ('user_id', 'profile_nickname', 'profile_image', 'email', 'is_superuser')
 
     def clean_password(self):
         return self.initial["password"]
