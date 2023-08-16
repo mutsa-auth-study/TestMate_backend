@@ -12,7 +12,7 @@ import uuid
 import xml.etree.ElementTree as ET
 import requests
 
-class ExamList(APIView):
+class ExamListView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
@@ -21,7 +21,7 @@ class ExamList(APIView):
         
         if request.user.is_authenticated:
             # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
-            exam_favorites = ExamFavorite.objects.filter(user=request.user)
+            exam_favorites = ExamFavorite.objects.filter(user=request.user.id)
             favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
     
             # 즐찾 여부 확인
@@ -43,7 +43,7 @@ class ExamList(APIView):
         # status 예외처리는 어디서 어떻게 해주나..
         return Response(response_data, status=status.HTTP_200_OK)
       
-class ExamDetail(APIView):
+class ExamDetailView(APIView):
     permission_classes = [AllowAny]
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
@@ -151,8 +151,10 @@ class ExamDetail(APIView):
 '''
     
 
-# ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
-class ExamFavoriteGet(APIView):
+# 즐겨찾기
+class ExamFavoriteView(APIView):
+    # 즐겨찾기 조회
+    # ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
 
     def get(self, request):
         if not request.user.is_authenticated:
@@ -177,8 +179,7 @@ class ExamFavoriteGet(APIView):
 
         return Response(exam_list, status=status.HTTP_200_OK)
 
-# 즐겨찾기 시험 정보 등록(post)
-class ExamFavoritePost(APIView):
+    # 즐겨찾기 등록
     def post(self, request):
         user_id = request.user.id
 
@@ -206,19 +207,12 @@ class ExamFavoritePost(APIView):
         # 추가된 시험 ID 리스트를 응답으로 반환 => 맞나..?
         return Response({"information": [{"exam_id": exam_id} for exam_id in added_exam_ids]}, status=status.HTTP_201_CREATED)
 
-
-# 즐겨찾기 시험 정보 삭제(delete)
-# class ExamFavoriteDelete(APIView):
-
-
-
-
-
-
+    # 즐겨찾기 시험 정보 삭제(delete)
+    # def delete(self, request):
 
 
 # 최근조회 시험 조회 [GET] [exam/recent]
-class RecentExamListView(APIView):
+class ExamRecentView(APIView):
     # 인증
     permission_classes = [permissions.IsAuthenticated]
 
