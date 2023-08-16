@@ -8,6 +8,8 @@ from .models import LocationComment, LocationInfo # 모델
 from .serializers import LocationCommentSerializer, LocationInfoSerializer # 시리얼라이저
 #from .permissions import CustomReadOnly # 권한 -> 근데 이거 안쓰고 drf에서 제공하는 permissions 쓰면 될듯
 from rest_framework import permissions # 로그인 권한
+import json
+from django.http import JsonResponse
 
 from rest_framework.views import Response, status
 from rest_framework.views import APIView
@@ -113,6 +115,67 @@ class deleteLocationComment(APIView):
 	# 위도, 경도와 함께 지도 API 호출
 	# 최단거리 리스트 10개 이내에 속하면 갱신
 # 최단거리 10개 반환
+
+
+# 고사장 확인 [GET][/location]
+class NearestLocation(View):
+
+    endPoint = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode"
+    CLID = "0jvousuc1a"
+    CLSC = "Fv681Ja00PiMfaSnpRSgkNdi2oXJ0PSqdymh8X0j"
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": CLID,
+        "X-NCP-APIGW-API-KEY": CLSC
+    }
+
+    def get(self,request):
+        # request_body에서 위도 경도 가져오기
+        lon = float(request.GET.get('longtitude'))
+        lat = float(request.GET.get('latitude'))
+        
+        # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
+        all_exam_location = LocationInfo.objects.values('location_id','address')
+
+        # 고사장 거리 계산 후 반환된 결과값 저장할 리스트
+        distances = []
+
+        for hall in all_exam_location:
+            params = {
+                "query" : hall['address'], # 각 고사장 주소
+                "coordinate" : f"{lon},{lat}" # 검색 기준
+            }
+
+            response = requests.get(self.endPoint, params=params, headers=self.headers)
+            data = json.loads(response.content)['addresses'][0]
+
+            distances.append({
+                'exam_hall' : hall,
+                'distance' : data['distance']
+            })
+
+        # 거리를 기준으로 오름차순 정렬 -> 상위 10개만 선택
+        distances = sorted(distances, key = lambda k: k['distance'])[:10]
+
+        #JsonResponse로 반환
+        response_data = []
+        for item in distances:
+            # location_id를 이용해 LocationInfo DB에서 해당 고사장의 모든 정보 가져오기
+            location_instance = LocationInfo.objects.get(location_id=item['exam_hall']['location_id'])
+            
+            # 시리얼라이저로 JSON 형식 변환
+            serializer = LocationInfoSerializer(location_instance)
+            
+            # 시리얼라이즈된 데이터에 distance 정보 추가
+            # 이부분 필요없을거 같음 -> 주석 처리 해버려요
+            # 해당 고사장이 사용자로부터 얼마나 떨어져있는지 거리 정보 제공할 때 필요
+            serialized_data = serializer.data
+            serialized_data['distance'] = item['distance']
+            response_data.append(serialized_data)
+            
+        return JsonResponse({
+            'status' : # 상태코드,
+            'information' : response_data
+        })
 
 
 # 고사장 정보 DB에 넣기
