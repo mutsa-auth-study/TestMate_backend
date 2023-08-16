@@ -118,58 +118,50 @@ class deleteLocationComment(APIView):
 
 
 # 고사장 확인 [GET][/location]
-class NearestLocation(View):
+class NearestLocation(APIView):
+    permission_classes = [AllowAny]
 
-    endPoint = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode"
-    CLID = "0jvousuc1a"
-    CLSC = "Fv681Ja00PiMfaSnpRSgkNdi2oXJ0PSqdymh8X0j"
-    headers = {
-        "X-NCP-APIGW-API-KEY-ID": CLID,
-        "X-NCP-APIGW-API-KEY": CLSC
-    }
-
-    def get(self,request):
+    def get(self,request, *args, **kwargs):
+        # 두 점 사이 거리
+        def getDist(lon1, lat1, lon2,lat2):
+            a = lon1 - lon2
+            b = lat1 - lat2
+            return a ** 2 + b ** 2
+        
         # request_body에서 위도 경도 가져오기
-        lon = float(request.GET.get('longtitude'))
-        lat = float(request.GET.get('latitude'))
+        request_data = request.data
+        lon = float(request_data.get('longtitude'))
+        lat = float(request_data.get('latitude'))
         
         # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
-        all_exam_location = LocationInfo.objects.values('location_id','address')
-
+        all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longtitude'))
+        
         # 고사장 거리 계산 후 반환된 결과값 저장할 리스트
         distances = []
 
-        for hall in all_exam_location:
-            params = {
-                "query" : hall['address'], # 각 고사장 주소
-                "coordinate" : f"{lon},{lat}" # 검색 기준
-            }
-
-            response = requests.get(self.endPoint, params=params, headers=self.headers)
-            data = json.loads(response.content)['addresses'][0]
-
-            distances.append({
-                'exam_hall' : hall,
-                'distance' : data['distance']
-            })
-
+        for location in all_exam_location:
+            d = getDist(lon, lat, location['longtitude'], location['latitude'])
+            distances.append((location['location_id'], d))
+            
         # 거리를 기준으로 오름차순 정렬 -> 상위 10개만 선택
-        distances = sorted(distances, key = lambda k: k['distance'])[:10]
+        nearest10 = sorted(distances, key = lambda k: k[1])[:10]
+        for i in nearest10:
+            print(i)
 
         #JsonResponse로 반환
         response_data = []
-        for item in distances:
+        for item in nearest10:
             # location_id를 이용해 LocationInfo DB에서 해당 고사장의 모든 정보 가져오기
-            location_instance = LocationInfo.objects.get(location_id=item['exam_hall']['location_id'])
+            location_instance = LocationInfo.objects.get(location_id=item[0])
             
             # 시리얼라이저로 JSON 형식 변환
             location_data = LocationInfoSerializer(location_instance).data
-            location_data['distance'] = item['distance']
+            location_data['distance'] = item[1]
 
             response_data.append(location_data)
             
         return Response(response_data, status=status.HTTP_200_OK)
-    
+
 
 
 # 고사장 정보 DB에 넣기
@@ -180,36 +172,83 @@ class setLocationDB(APIView):
     endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryExamAreaSVC/getList"
 
     def post(self, request, *args, **kwargs):
+        naverEndPoint = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode"
+        CLID = "0jvousuc1a"
+        CLSC = "Fv681Ja00PiMfaSnpRSgkNdi2oXJ0PSqdymh8X0j"
+        headers = {
+            "X-NCP-APIGW-API-KEY-ID": CLID,
+            "X-NCP-APIGW-API-KEY": CLSC
+        }
 
-        params = {"serviceKey": self.decodedKey,
-            "brchCd": "00",
-            "numOfRows": 100,
-            "pageNo": 1
-            }
-        response = requests.get(self.endPoint, params=params)
-        root = ET.fromstring(response.content)
-        
-        for item in root.findall('.//item'):
-            dict = {}
-            dict["address"] = item.find('address').text
-            dict["examAreaGbNm"] = item.find('examAreaGbNm').text
-            dict["plceLoctGid"] = item.find('placeLoctGid').text
-            dict["telNo"] = item.find('telNo').text
-            
-            dict["brchNm"] = item.find('brchNm').text
-            dict["examAreaNm"] = item.find('examAreaNm').text
-            serializer = LocationInfoSerializer(data=dict)
-            print(dict)
-            print(serializer.data)
-            print()
-            # if serializer.is_valid():
-            #     serializer.save()
-            #     print("OK")
-            # else:
-            #     return Response(status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response(status=status.HTTP_201_CREATED)
-    
+        n = 2
+        while n <= 2:
+            if n <10:
+                m = "0" + str(n)
+            else:
+                m = str(n)
+
+            params = {"serviceKey": self.decodedKey,
+                "brchCd": m,
+                "numOfRows": 100,
+                "pageNo": 1
+                }
+            response = requests.get(self.endPoint, params=params)
+            root = ET.fromstring(response.content)
+            responseData = []
+            i = 1
+            for item in root.findall('.//item'):
+                dict = {}
+                dict["address"] = item.find('address').text
+
+                db = LocationInfo.objects.filter(address=dict["address"])
+                if len(db):
+                    print("중복")
+                    continue
+                
+                dict["brchNm"] = item.find('brchNm').text
+                dict["examAreaGbNm"] = item.find('examAreaGbNm').text
+                dict["examAreaNm"] = item.find('examAreaNm').text
+                dict["plceLoctGid"] = item.find('plceLoctGid').text
+                dict["telNo"] = item.find('telNo').text
+                print('ok')
+                if i <= 19:
+                    i += 1
+                    responseData.append(dict)
+                    continue
+                naverParams = {
+                "query" : dict["address"], # 각 고사장 주소
+                }
+                response = requests.get(naverEndPoint, params=naverParams, headers=headers)
+                data = json.loads(response.content)
+                data = data["addresses"][0]
+                dict["latitude"] = data["y"]
+                dict["longtitude"] = data["x"]
+
+                serializer = LocationInfoSerializer(data=dict)
+                
+                
+                if serializer.is_valid():
+                    serializer.save()
+                    print("OK")
+                    # return Response(status=status.HTTP_208_ALREADY_RE PORTED)
+                else:
+                    responseData.append(dict)
+                    # return Response(status=status.HTTP_400_BAD_REQUEST)
+            n += 1
+        return Response(responseData, status=status.HTTP_201_CREATED)
+'''
+'''
+class deleteLocationDB(APIView):
+    permission_classes = [AllowAny] 
+
+    def delete(self, request, *args, **kwargs):
+        data = LocationInfo.objects.all()
+        for item in data:
+            item.delete()
+            print('del')
+        return Response(status=status.HTTP_205_RESET_CONTENT)
+
+'''
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
 # 여러 HTTP 메소드를 한 클래스 내에서 다루기 위해 중앙 뷰 생성
@@ -227,3 +266,4 @@ class MainLocationCommentView(APIView) :
     
     def delete(self, request, user_id, location_id, *args, **kwargs):
         return deleteLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
+# '''

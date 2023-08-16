@@ -33,7 +33,9 @@ class LocationInfo(models.Model):
     # 하단의 항목들은 information이라는 리스트로 다 들어가 있음
     address = models.CharField(max_length=100) # 시험장소 주소
     brchNm = models.CharField(max_length=100) # 지사명
-    examAreaGbNm = models.CharField(max_length=100) # 시행장소 구분
+    examAreaGbNm = models.CharField(max_length=100, blank=True) # 시행장소 구분
     examAreaNm = models.CharField(max_length=100) # 시행장소명
-    plceLoctGid = models.CharField(max_length=100) # 장소위치안내
-    telNo = models.CharField(max_length=100) # 전화번호
+    plceLoctGid = models.CharField(max_length=100, default="", blank=True) # 장소위치안내
+    telNo = models.CharField(max_length=100, default="", blank=True) # 전화번호
+    latitude = models.FloatField(max_length=100, default=0.0) # 위도
+    longtitude = models.FloatField(max_length=100, default=0.0) # 경도
