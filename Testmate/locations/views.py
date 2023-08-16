@@ -163,7 +163,7 @@ class NearestLocation(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-
+'''
 # 고사장 정보 DB에 넣기
 class setLocationDB(APIView):
     permission_classes = [AllowAny]
@@ -236,8 +236,7 @@ class setLocationDB(APIView):
                     # return Response(status=status.HTTP_400_BAD_REQUEST)
             n += 1
         return Response(responseData, status=status.HTTP_201_CREATED)
-'''
-'''
+
 class deleteLocationDB(APIView):
     permission_classes = [AllowAny] 
 
@@ -248,7 +247,7 @@ class deleteLocationDB(APIView):
             print('del')
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
-'''
+
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
 # 여러 HTTP 메소드를 한 클래스 내에서 다루기 위해 중앙 뷰 생성
@@ -266,4 +265,4 @@ class MainLocationCommentView(APIView) :
     
     def delete(self, request, user_id, location_id, *args, **kwargs):
         return deleteLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
-# '''
+'''
