@@ -1,5 +1,5 @@
 import os
-from uuid import uuid4
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin,AbstractUser   # 사용자 권한 부여
 from django.contrib.auth.base_user import BaseUserManager
@@ -35,35 +35,26 @@ class UserManager(BaseUserManager):
         superuser.save()
         return superuser
 
+
 # 사용자 모델 클래스 정의
 class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField('이메일', unique=True)
 
-        # 파일 업로드 경로 생성 함수 정의
-    def upload_to_func(instance, filename):
-        prefix = timezone.now().strftime("%Y/%m/%d")
-        file_name = uuid4().hex
-        extension = os.path.splitext(filename)[-1].lower()
-        return "/".join(
-            [prefix, file_name, extension, ]
-        )
-    
-
-    username = models.CharField(max_length=150,default='')
-    user_id = models.CharField('아이디',max_length=20)
-    profile_nickname = models.CharField('닉네임', max_length=20, blank =True, null=True)
-    profile_image =  models.ImageField('프로필 사진', upload_to=upload_to_func, null=True, blank=True)
-    email = models.CharField('이메일', max_length=40, unique=True)
-
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    kakao_id = models.BigIntegerField('카카오 아이디', null=True, blank=True)
+    profile_nickname = models.CharField('닉네임', max_length=20, null=True, blank=True)
+    profile_image = models.CharField('프로필 사진', max_length=200, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
 
-    objects = UserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    objects = UserManager()
+
     def __str__(self):
-        return self.uname or ''
+        return self.email
 
     def has_perm(self, perm, obj=None):
         return True
