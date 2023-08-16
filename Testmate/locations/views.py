@@ -163,65 +163,52 @@ class NearestLocation(View):
             location_instance = LocationInfo.objects.get(location_id=item['exam_hall']['location_id'])
             
             # 시리얼라이저로 JSON 형식 변환
-            serializer = LocationInfoSerializer(location_instance)
+            location_data = LocationInfoSerializer(location_instance).data
+            location_data['distance'] = item['distance']
+
+            response_data.append(location_data)
             
-            # 시리얼라이즈된 데이터에 distance 정보 추가
-            # 이부분 필요없을거 같음 -> 주석 처리 해버려요
-            # 해당 고사장이 사용자로부터 얼마나 떨어져있는지 거리 정보 제공할 때 필요
-            serialized_data = serializer.data
-            serialized_data['distance'] = item['distance']
-            response_data.append(serialized_data)
-            
-        return JsonResponse({
-            'status' : # 상태코드,
-            'information' : response_data
-        })
+        return Response(response_data, status=status.HTTP_200_OK)
+    
 
 
 # 고사장 정보 DB에 넣기
 class setLocationDB(APIView):
-    decodedKey = "" # 발급받아야함
-    endPoint = "요청url" # 요청url 없음
+    permission_classes = [AllowAny]
 
-    def get(self, request, *args, **kwargs):
-        def callAPI(brchCd):
-            # latitude = request_data['latitude'] #request
-            # longtitude = request_data['longtitude'] #request
-            # 위경도 request는 공공데이터 api 호출할때는 필요없는데..어떻게 처리?
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
+    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryExamAreaSVC/getList"
 
-            params = {"serviceKey": self.decodedKey,
-            "brchCd": "서울",
-            "numOfRows": 10,
+    def post(self, request, *args, **kwargs):
+
+        params = {"serviceKey": self.decodedKey,
+            "brchCd": "00",
+            "numOfRows": 100,
             "pageNo": 1
             }
-            response = requests.get(self.endPoint, params=params)
-            root = ET.fromstring(response.content)
+        response = requests.get(self.endPoint, params=params)
+        root = ET.fromstring(response.content)
+        
+        for item in root.findall('.//item'):
             dict = {}
-            for item in root.findall('.//item'):
-                dict["address"] = item.find('address').text
-                dict["brchCd"] = item.find('brchCd').text
-                dict["brchNm"] = item.find('brchNm').text
-                dict["examAreaGbNm"] = item.find('examAreaGbNm').text
-                dict["examAreaNm"] = item.find('examAreaNm').text
-                dict["plceLoctGid"] = item.find('placeLoctGid').text
-                dict["telNo"] = item.find('telNo').text
-                
-            return dict
+            dict["address"] = item.find('address').text
+            dict["examAreaGbNm"] = item.find('examAreaGbNm').text
+            dict["plceLoctGid"] = item.find('placeLoctGid').text
+            dict["telNo"] = item.find('telNo').text
+            
+            dict["brchNm"] = item.find('brchNm').text
+            dict["examAreaNm"] = item.find('examAreaNm').text
+            serializer = LocationInfoSerializer(data=dict)
+            print(dict)
+            print(serializer.data)
+            print()
+            # if serializer.is_valid():
+            #     serializer.save()
+            #     print("OK")
+            # else:
+            #     return Response(status=status.HTTP_400_BAD_REQUEST)
         
-        request_data = request.data
-        # additional_info = request.META.get('HTTP_X_ADDITIONAL_INFO', None)  # 예시로 요청 헤더에서 추가 정보를 가져옴
-        # 이해안감
-        
-        LocationInfo = callAPI(request_data["brchCd"])
-        LocationInfo["location_id"] = request_data["location_id"]
-
-        serializer = LocationInfoSerializer(data=LocationInfo)
-        
-        if serializer.is_valid():
-            serializer.save() #데이터베이스에 저장
-            return response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
     
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
