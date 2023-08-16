@@ -1,12 +1,11 @@
 from django.urls import path
-
-from .views import ExamList, ExamDetail, RecentExamListView
-#from .views import setExamDB_XML, deleteExamDB_XML
+from .views import *
 
 urlpatterns = [
-    path("", ExamList.as_view(), name='getExamList'),
-    path("<str:exam_id>/", ExamDetail.as_view(), name='getExamDetail'),
-    path("recent/", RecentExamListView.as_view(), name='getRecentExam'),
+    path("", ExamListView.as_view(), name='ExamList'),
+    path("detail/<str:exam_id>/", ExamDetailView.as_view(), name='ExamDetail'),
+    path("favorite/", ExamFavoriteView.as_view(), name='ExamFavorite'),
+    path("recent/", ExamRecentView.as_view(), name='ExamRecent'),
 
     # path("setDB/", setExamDB.as_view(), name='setDB'),
     # path("setDBXML/", setExamDB_XML.as_view(), name='setDBXML'),

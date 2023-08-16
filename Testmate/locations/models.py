@@ -1,8 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 import uuid
-
+User = get_user_model()
 # Create your models here.
 class LocationComment(models.Model):
     location_comment_id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
