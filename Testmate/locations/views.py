@@ -8,10 +8,13 @@ from .models import LocationComment, LocationInfo # 모델
 from .serializers import LocationCommentSerializer, LocationInfoSerializer # 시리얼라이저
 #from .permissions import CustomReadOnly # 권한 -> 근데 이거 안쓰고 drf에서 제공하는 permissions 쓰면 될듯
 from rest_framework import permissions # 로그인 권한
+import json
+from django.http import JsonResponse
 
 from rest_framework.views import Response, status
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from .pagination import CustomPageNumberPagination
 from rest_framework import response, status
 import xml.etree.ElementTree as ET
 import requests
@@ -31,7 +34,7 @@ class getLocationComment(APIView):
             return Response({"detail": "Location comment not found"}, status=status.HTTP_404_NOT_FOUND)
         
         # 페이지네이션 적용
-        paginator = PageNumberPagination()
+        paginator = CustomPageNumberPagination()
         paginated_comments = paginator.paginate_queryset(locationComment,request)
         serializer = LocationCommentSerializer(paginated_comments, many=True)
 
@@ -114,50 +117,98 @@ class deleteLocationComment(APIView):
 # 최단거리 10개 반환
 
 
+# 고사장 확인 [GET][/location]
+class NearestLocation(View):
+
+    endPoint = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode"
+    CLID = "0jvousuc1a"
+    CLSC = "Fv681Ja00PiMfaSnpRSgkNdi2oXJ0PSqdymh8X0j"
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": CLID,
+        "X-NCP-APIGW-API-KEY": CLSC
+    }
+
+    def get(self,request):
+        # request_body에서 위도 경도 가져오기
+        lon = float(request.GET.get('longtitude'))
+        lat = float(request.GET.get('latitude'))
+        
+        # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
+        all_exam_location = LocationInfo.objects.values('location_id','address')
+
+        # 고사장 거리 계산 후 반환된 결과값 저장할 리스트
+        distances = []
+
+        for hall in all_exam_location:
+            params = {
+                "query" : hall['address'], # 각 고사장 주소
+                "coordinate" : f"{lon},{lat}" # 검색 기준
+            }
+
+            response = requests.get(self.endPoint, params=params, headers=self.headers)
+            data = json.loads(response.content)['addresses'][0]
+
+            distances.append({
+                'exam_hall' : hall,
+                'distance' : data['distance']
+            })
+
+        # 거리를 기준으로 오름차순 정렬 -> 상위 10개만 선택
+        distances = sorted(distances, key = lambda k: k['distance'])[:10]
+
+        #JsonResponse로 반환
+        response_data = []
+        for item in distances:
+            # location_id를 이용해 LocationInfo DB에서 해당 고사장의 모든 정보 가져오기
+            location_instance = LocationInfo.objects.get(location_id=item['exam_hall']['location_id'])
+            
+            # 시리얼라이저로 JSON 형식 변환
+            location_data = LocationInfoSerializer(location_instance).data
+            location_data['distance'] = item['distance']
+
+            response_data.append(location_data)
+            
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+
+
 # 고사장 정보 DB에 넣기
 class setLocationDB(APIView):
-    decodedKey = "" # 발급받아야함
-    endPoint = "요청url" # 요청url 없음
+    permission_classes = [AllowAny]
 
-    def get(self, request, *args, **kwargs):
-        def callAPI(brchCd):
-            # latitude = request_data['latitude'] #request
-            # longtitude = request_data['longtitude'] #request
-            # 위경도 request는 공공데이터 api 호출할때는 필요없는데..어떻게 처리?
+    decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
+    endPoint = "http://openapi.q-net.or.kr/api/service/rest/InquiryExamAreaSVC/getList"
 
-            params = {"serviceKey": self.decodedKey,
-            "brchCd": "서울",
-            "numOfRows": 10,
+    def post(self, request, *args, **kwargs):
+
+        params = {"serviceKey": self.decodedKey,
+            "brchCd": "00",
+            "numOfRows": 100,
             "pageNo": 1
             }
-            response = requests.get(self.endPoint, params=params)
-            root = ET.fromstring(response.content)
+        response = requests.get(self.endPoint, params=params)
+        root = ET.fromstring(response.content)
+        
+        for item in root.findall('.//item'):
             dict = {}
-            for item in root.findall('.//item'):
-                dict["address"] = item.find('address').text
-                dict["brchCd"] = item.find('brchCd').text
-                dict["brchNm"] = item.find('brchNm').text
-                dict["examAreaGbNm"] = item.find('examAreaGbNm').text
-                dict["examAreaNm"] = item.find('examAreaNm').text
-                dict["plceLoctGid"] = item.find('placeLoctGid').text
-                dict["telNo"] = item.find('telNo').text
-                
-            return dict
+            dict["address"] = item.find('address').text
+            dict["examAreaGbNm"] = item.find('examAreaGbNm').text
+            dict["plceLoctGid"] = item.find('placeLoctGid').text
+            dict["telNo"] = item.find('telNo').text
+            
+            dict["brchNm"] = item.find('brchNm').text
+            dict["examAreaNm"] = item.find('examAreaNm').text
+            serializer = LocationInfoSerializer(data=dict)
+            print(dict)
+            print(serializer.data)
+            print()
+            # if serializer.is_valid():
+            #     serializer.save()
+            #     print("OK")
+            # else:
+            #     return Response(status=status.HTTP_400_BAD_REQUEST)
         
-        request_data = request.data
-        # additional_info = request.META.get('HTTP_X_ADDITIONAL_INFO', None)  # 예시로 요청 헤더에서 추가 정보를 가져옴
-        # 이해안감
-        
-        LocationInfo = callAPI(request_data["brchCd"])
-        LocationInfo["location_id"] = request_data["location_id"]
-
-        serializer = LocationInfoSerializer(data=LocationInfo)
-        
-        if serializer.is_valid():
-            serializer.save() #데이터베이스에 저장
-            return response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        return response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
     
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
