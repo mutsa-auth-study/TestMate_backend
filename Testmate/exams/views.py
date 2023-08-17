@@ -168,7 +168,7 @@ class ExamDetailView(APIView):
                     "information": dict
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
-            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(status=status.HTTP_304_NOT_MODIFIED)
             plan.append(dict)
         
         # response_data = {
