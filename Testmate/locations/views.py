@@ -109,6 +109,25 @@ class deleteLocationComment(APIView):
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
 
+# 작성 고사장 리뷰 조회 [GET][/location/mycomment] 
+class getMyComment(APIView):
+    # 로그인한 사용자만 접근 가능
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        userID = request.user.id
+        locationComment = LocationComment.objects.filter(user_id=userID)
+
+        # userID와 일치하는 데이터가 없을 경우 404 응답을 반환
+        if not locationComment.exists():
+            return Response({"detail": "There is no comments from the user"}, status=status.HTTP_204_NO_CONTENT)
+        
+        # 페이지네이션 적용
+        paginator = CustomPageNumberPagination()
+        paginated_comments = paginator.paginate_queryset(locationComment,request)
+        serializer = LocationCommentSerializer(paginated_comments, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
 
 # 고사장 확인 [GET][/location]
 class NearestLocation(APIView):
