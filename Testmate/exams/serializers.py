@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Exam, ExamPlan, ExamRecent
+from .models import *
 
 class ExamTotalSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,6 +11,11 @@ class ExamTotalSerializer(serializers.ModelSerializer):
 class ExamDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamPlan
+        fields = '__all__'
+
+class ExamFavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamFavorite
         fields = '__all__'
 
 class ExamRecentSerializer(serializers.ModelSerializer):

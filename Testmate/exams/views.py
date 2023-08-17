@@ -1,5 +1,5 @@
-from .models import Exam, ExamPlan, ExamFavorite, ExamRecent
-from .serializers import ExamTotalSerializer, ExamDetailSerializer, ExamRecentSerializer
+from .models import *
+from .serializers import *
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,6 +13,10 @@ from locations.pagination import CustomPageNumberPagination
 
 import xml.etree.ElementTree as ET
 import requests
+from threading import Lock
+
+lock = Lock()
+
 '''
 # 메인 화면 API
 class ExamMainView(APIView):
@@ -235,52 +239,54 @@ class ExamFavoriteView(APIView):
 
     # 즐겨찾기 등록
     def post(self, request):
-        user_id = request.user.id
+        # POST 하는동안 다른 요청 보류
+        with lock:
+            request.can_process_get = True
+            user_id = request.user.id
 
-        # 현재 즐겨찾기한 시험 ID 개수 확인
-        favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
+            # 현재 즐겨찾기한 시험 ID 개수 확인
+            favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
 
-        # 즐겨찾기한 시험 개수가 5개 이상이면 실패 응답 반환
-        if favorite_count >= 5:
-            return Response({"detail": "You can only add up to 5 exams to favorites."}, status=status.HTTP_400_BAD_REQUEST)
+            # 즐겨찾기한 시험 개수가 5개 이상이면 실패 응답 반환
+            if favorite_count >= 10:
+                return Response({"detail": "You can only add up to 10 exams to favorites."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 요청 데이터에서 즐겨찾기할 시험 ID 리스트 가져오기
-        exam_ids = request.data.get('exam_ids', [])
+            # 요청 데이터에서 즐겨찾기할 시험 ID 가져오기
+            exam_id = request.data.get('exam_id')
 
-        # 요청 데이터에 exam_ids가 없으면 실패 응답 반환
-        if not exam_ids:
-            return Response({"detail": "exam_ids are required."}, status=status.HTTP_400_BAD_REQUEST)
+            # 요청 데이터에 exam_id가 없으면 실패 응답 반환
+            if not exam_id:
+                return Response({"detail": "exam_ids are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        added_exam_ids = []
-
-        for exam_id in exam_ids:
-            # 이미 즐겨찾기한 시험인지 확인 후 추가
-            if not ExamFavorite.objects.filter(user_id=user_id, exam_id=exam_id).exists():
-                added_exam_ids.append(exam_id)
-
-        # 추가된 시험 ID 리스트를 응답으로 반환 => 맞나..?
-        return Response({"information": [{"exam_id": exam_id} for exam_id in added_exam_ids]}, status=status.HTTP_201_CREATED)
+            dict = {"exam_id":exam_id, "user_id":user_id}
+            serializer = ExamFavoriteSerializer(data=dict)
+            if serializer.is_valid():
+                serializer.save()  # 데이터베이스에 저장
+                print("즐찾 등록 성공")
+                return Response(status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # 즐겨찾기 시험 정보 삭제(delete)
     def delete(self, request):
-        
-        user_id = request.data.get('user_id')
-        exam_id = request.data.get('exam_id')
+        # DELETE 하는동안 다른 요청 보류
+        with lock:
+            user_id = request.data.get('user_id')
+            exam_id = request.data.get('exam_id')
 
-        # 요청 데이터에 user_id 또는 exam_id가 없으면 실패 응답 반환
-        if not user_id or not exam_id:
-            return Response({"detail": "user_id and exam_id are required."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            # 해당 즐겨찾기 항목 삭제
-            favorite = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
-            favorite.delete()
+            # 요청 데이터에 user_id 또는 exam_id가 없으면 실패 응답 반환
+            if not user_id or not exam_id:
+                return Response({"detail": "user_id and exam_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                # 해당 즐겨찾기 항목 삭제
+                favorite = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
+                favorite.delete()
 
-            return Response({"detail": "Delete Success"}, status=status.HTTP_200_OK)
-        
-        # 해당 즐겨찾기 항목이 존재하지 않는 경우
-        except ExamFavorite.DoesNotExist:
-            return Response({"detail": "Favorite exam not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"detail": "Delete Success"}, status=status.HTTP_200_OK)
+            
+            # 해당 즐겨찾기 항목이 존재하지 않는 경우
+            except ExamFavorite.DoesNotExist:
+                return Response({"detail": "Favorite exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 
