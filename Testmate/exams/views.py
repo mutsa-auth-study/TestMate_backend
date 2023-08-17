@@ -278,10 +278,6 @@ class ExamFavoriteView(APIView):
             user_id = request.data.get('user_id')
             exam_id = request.data.get('exam_id')
 
-            # 요청 데이터에 user_id 또는 exam_id가 없으면 실패 응답 반환
-            if not user_id or not exam_id:
-                return Response({"detail": "user_id and exam_id are required."}, status=status.HTTP_400_BAD_REQUEST)
-            
             try:
                 # 해당 즐겨찾기 항목 삭제
                 favorite = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
