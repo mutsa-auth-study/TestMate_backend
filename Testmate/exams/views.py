@@ -287,11 +287,15 @@ class ExamFavoriteView(APIView):
                 favorite = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
                 favorite.delete()
 
-                return Response({"detail": "Delete Success"}, status=status.HTTP_200_OK)
+                print("즐찾 삭제 성공")
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
             
             # 해당 즐겨찾기 항목이 존재하지 않는 경우
             except ExamFavorite.DoesNotExist:
-                return Response({"detail": "Favorite exam not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"detail": "Favorite exam not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
