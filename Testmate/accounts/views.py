@@ -69,7 +69,7 @@ def kakao_callback(request):
         # Serialize the user info using the extended serializer
         serializer = UserInfoSerializer(instance=user)
         response_body = serializer.data
-        response_body['user_id'] = response_body.pop('pk')
+        # response_body['user_id'] = response_body.pop('pk')
         response_body['accessToken'] = str(refresh.access_token) # Replace with the actual access token
         return Response({'information':response_body}, status= status.HTTP_201_CREATED)
 

@@ -82,9 +82,9 @@ class ExamListView(APIView):
         # 페이지네이션 적용
         # 일단 주석처리 해놓겠음.
         paginator = CustomPageNumberPagination()
-        paginated_comments = paginator.paginate_queryset(Exam,request)
-        serializer = ExamTotalSerializer(paginated_comments, many=True)
-
+        paginated = paginator.paginate_queryset(Exam,request)
+        serializer = ExamTotalSerializer(paginated, many=True)
+        print(paginator.get_paginated_response(serializer.data))
         return paginator.get_paginated_response(serializer.data)
   
 class ExamDetailView(APIView):
