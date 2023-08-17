@@ -109,13 +109,6 @@ class deleteLocationComment(APIView):
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
 
-# 고사장 확인 [GET][/location]
-#for location in (우리 DB에 있는 고사장들)
-	# location.addr 추출
-	# 위도, 경도와 함께 지도 API 호출
-	# 최단거리 리스트 10개 이내에 속하면 갱신
-# 최단거리 10개 반환
-
 
 # 고사장 확인 [GET][/location]
 class NearestLocation(APIView):
@@ -246,7 +239,7 @@ class deleteLocationDB(APIView):
             item.delete()
             print('del')
         return Response(status=status.HTTP_205_RESET_CONTENT)
-
+'''
 
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
@@ -265,4 +258,3 @@ class MainLocationCommentView(APIView) :
     
     def delete(self, request, user_id, location_id, *args, **kwargs):
         return deleteLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
-'''
