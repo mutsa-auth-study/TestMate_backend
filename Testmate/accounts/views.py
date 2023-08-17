@@ -73,7 +73,7 @@ def kakao_callback(request):
         response_body['accessToken'] = str(refresh.access_token) # Replace with the actual access token
         return Response({'information':response_body}, status= status.HTTP_201_CREATED)
 
-    except:
+    except User.DoesNotExist:
         # 1. 유저 모델, 유저 매니저에서 유저 정보 생성하는 함수 ( create_user(email= "", ... etc))
         extra_fields = {
         'kakao_id': kakao_id,

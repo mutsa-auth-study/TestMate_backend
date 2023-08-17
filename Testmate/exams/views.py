@@ -133,7 +133,7 @@ class ExamDetailView(APIView):
             "implYy": "2023",
             "qualgbCd": request_data.get("qualgbCd"), #request
             "jmCd": request_data.get("jmCd"), #request
-            "numOfRows": "10", #임시로 10으로 해놓음. 여러개중 하나 어케 고르지..
+            "numOfRows": "1", #임시로 1으로 해놓음. 여러개중 하나 어케 고르지..
             "pageNo": "1",
             "dataFormat": "xml"
             }
