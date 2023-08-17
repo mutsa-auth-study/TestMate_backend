@@ -55,7 +55,7 @@ class ExamListView(APIView):
         
         if request.user.is_authenticated:
             # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
-            exam_favorites = ExamFavorite.objects.filter(user=request.user.pk)
+            exam_favorites = ExamFavorite.objects.filter(user_id=request.user.pk)
             favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
     
             # 즐찾 여부 확인
