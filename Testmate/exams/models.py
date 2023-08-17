@@ -23,19 +23,19 @@ class Exam(models.Model):
 class ExamPlan(models.Model):
     exam_plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     exam_id = models.ForeignKey(Exam,on_delete=models.CASCADE,blank=False) # 위에 있는 Exam모델의 기본키를 외래키로
-    implYy = models.CharField(max_length=100, blank=True, default="") # 시행년도
-    implSeq = models.CharField(max_length=100, blank=True, default="") # 시행회차
-    description = models.CharField(max_length=100, blank=True, default="") # 설명
-    docRegStartDt = models.CharField(max_length=100, blank=True, default="") # 필기시험 원서접수 시작일자
-    docRegEndDt = models.CharField(max_length=100, blank=True, default="") # 필기시험 원서접수 종료일자
-    docExamStartDt = models.CharField(max_length=100, blank=True, default="") # 필기시험 시작일자
-    docExamEndDt = models.CharField(max_length=100, blank=True, default="") # 필기시험 종료일자
-    docPassDt = models.CharField(max_length=100, blank=True, default="") # 필기시험 합격(예정)자 발표일자
-    pracRegStartDt = models.CharField(max_length=100, blank=True, default="") # 실기(작업)/면접 시험 원서접수 시작일자
-    pracRegEndDt = models.CharField(max_length=100, blank=True, default="") # 실기(작업)/면접 시험 원서접수 종료일자
-    pracExamStartDt = models.CharField(max_length=100, blank=True, default="") # 실기(작업)/면접 시험 시작일자
-    pracExamEndDt = models.CharField(max_length=100, blank=True, default="") # 실기(작업)/면접 시험 종료일자
-    pracPassDt = models.CharField(max_length=100, blank=True, default="") # 실기(작업)/면접 합격자 발표일자
+    implYy = models.CharField(max_length=100, blank=True, default="", null=True) # 시행년도
+    implSeq = models.CharField(max_length=100, blank=True, default="", null=True) # 시행회차
+    description = models.CharField(max_length=100, blank=True, default="", null=True) # 설명
+    docRegStartDt = models.CharField(max_length=100, blank=True, default="", null=True) # 필기시험 원서접수 시작일자
+    docRegEndDt = models.CharField(max_length=100, blank=True, default="", null=True) # 필기시험 원서접수 종료일자
+    docExamStartDt = models.CharField(max_length=100, blank=True, default="", null=True) # 필기시험 시작일자
+    docExamEndDt = models.CharField(max_length=100, blank=True, default="", null=True) # 필기시험 종료일자
+    docPassDt = models.CharField(max_length=100, blank=True, default="", null=True) # 필기시험 합격(예정)자 발표일자
+    pracRegStartDt = models.CharField(max_length=100, blank=True, default="", null=True) # 실기(작업)/면접 시험 원서접수 시작일자
+    pracRegEndDt = models.CharField(max_length=100, blank=True, default="", null=True) # 실기(작업)/면접 시험 원서접수 종료일자
+    pracExamStartDt = models.CharField(max_length=100, blank=True, default="", null=True) # 실기(작업)/면접 시험 시작일자
+    pracExamEndDt = models.CharField(max_length=100, blank=True, default="", null=True) # 실기(작업)/면접 시험 종료일자
+    pracPassDt = models.CharField(max_length=100, blank=True, default="", null=True) # 실기(작업)/면접 합격자 발표일자
 
 class ExamFavorite(models.Model):
     favorite_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
