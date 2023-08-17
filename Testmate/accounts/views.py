@@ -83,13 +83,13 @@ def kakao_callback(request):
         user = User.objects.create_user(email=email, password='', **extra_fields)
 
         # 2. 해당 정보로 access token, refresh token 발급
-        refresh = RefreshToken. for_user(user)
+        refresh = RefreshToken.for_user(user)
 
         # 3. return Response()
         # Serialize the user info using the extended serializer
         serializer = UserInfoSerializer(user)
         response_body = serializer.data
-        response_body['user_id'] = response_body.pop('pk')
+        response_body['user_id'] = response_body.pop('kakao_id')
         response_body['accessToken'] = str(refresh.access_token) # Replace with the actual access token
         return Response({'information':response_body}, status= status.HTTP_201_CREATED)
 
