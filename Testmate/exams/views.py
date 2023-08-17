@@ -160,6 +160,10 @@ class ExamDetailView(APIView):
             dict["pracPassDt"] = item.find('pracPassDt').text
             dict["exam_id"] = examID
 
+            for i in dict.keys:
+                if dict[i] == "":
+                    dict[i] = " "
+
             serializer = ExamDetailSerializer(data=dict)
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
