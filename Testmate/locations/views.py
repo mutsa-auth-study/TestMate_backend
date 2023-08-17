@@ -142,17 +142,17 @@ class NearestLocation(APIView):
         
         # request_body에서 위도 경도 가져오기
         request_data = request.data
-        lon = float(request_data.get('longtitude'))
+        lon = float(request_data.get('longitude'))
         lat = float(request_data.get('latitude'))
         
         # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
-        all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longtitude'))
+        all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longitude'))
         
         # 고사장 거리 계산 후 반환된 결과값 저장할 리스트
         distances = []
 
         for location in all_exam_location:
-            d = getDist(lon, lat, location['longtitude'], location['latitude'])
+            d = getDist(lon, lat, location['longitude'], location['latitude'])
             distances.append((location['location_id'], d))
             
         # 거리를 기준으로 오름차순 정렬 -> 상위 10개만 선택

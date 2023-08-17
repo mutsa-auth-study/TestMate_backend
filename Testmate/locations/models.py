@@ -38,4 +38,4 @@ class LocationInfo(models.Model):
     plceLoctGid = models.CharField(max_length=100, default="", blank=True) # 장소위치안내
     telNo = models.CharField(max_length=100, default="", blank=True) # 전화번호
     latitude = models.FloatField(max_length=100, default=0.0) # 위도
-    longtitude = models.FloatField(max_length=100, default=0.0) # 경도
+    longitude = models.FloatField(max_length=100, default=0.0) # 경도
