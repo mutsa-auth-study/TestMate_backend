@@ -233,6 +233,7 @@ class ExamFavoriteView(APIView):
             exam_list.append(exam)
         '''
         # 최적화
+        # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
         exams = Exam.objects.filter(exam_id__in=favorite_exam_ids)
 
         # 시리얼라이징
@@ -300,20 +301,36 @@ class ExamFavoriteView(APIView):
 
 # 최근조회 시험 조회 [GET] [exam/recent]
 class ExamRecentView(APIView):
-    # 인증
-    permission_classes = [permissions.IsAuthenticated]
+    def get(self,request):
 
-    def get(self, request):
-        # user_id를 인증된 사용자로부터 얻음
+    # 인증
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
         user_id = request.user.id
 
-        # 가장 최근 조회한 10개 정보 가져오기
-        recent_exams = get_list_or_404(ExamRecent, user_id=user_id)[:10]
+        # 최근 조회 시험이 없다면 404 반환
+        recent_exams_ids = get_list_or_404(ExamRecent.objects.order_by('-recent_id'), user_id=user_id)[:10]
+        # recent_exams_ids 리스트 형태
+        # recent_exams_ids에는 최근조회 시험id 10개 들어있음
 
-        # 시리얼라이저를 통해 JSON으로 변환
-        serializer = ExamRecentSerializer(recent_exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        '''
+        # 이건 404 반환 안하는 버전
+        recent_exams_ids = ExamRecent.objects.filter(user_id=user_id).order_by('-recent_id')[:10]
+        '''
+        # 최적화
+        # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
+        exams = Exam.objects.filter(exams_id__in=recent_exams_ids)
 
+        # 시리얼라이징
+        serializer = ExamTotalSerializer(exams, many=True)
+
+        # 반환
+        response_data  = {
+                    "status" : status.HTTP_200_OK,
+                    "information" : serializer.data ,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 '''
 # 호출은 되지만 xml 읽기에 실패하는듯. 아래에 파일 직접 읽어서 성공함.
