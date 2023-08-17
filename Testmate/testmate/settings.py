@@ -45,7 +45,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "ec2-3-37-74-26.ap-northeast-2.compute.amazonaws.com",
-    ".testmate.o-r.kr"
+    ".testmate.o-r.kr",
+    'https://testmate.vercel.app'
     ]
 
 
