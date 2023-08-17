@@ -140,7 +140,7 @@ class ExamDetailView(APIView):
         response = requests.get(self.endPoint, params=params)
         root = ET.fromstring(response.content)
 
-        plan = []
+        # plan = []
         for item in root.findall('.//item'):
             dict = {}
             dict["implYy"] = item.find('implYy').text
@@ -161,13 +161,18 @@ class ExamDetailView(APIView):
             serializer = ExamDetailSerializer(data=dict)
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
+            response_data = {
+                    "status": status.HTTP_200_OK,
+                    "information": dict
+                }
+            return Response(response_data, status=status.HTTP_200_OK)
             plan.append(dict)
         
-        response_data = {
-                "status": status.HTTP_200_OK,
-                "information": plan
-            }
-        return Response(response_data, status=status.HTTP_200_OK)
+        # response_data = {
+        #         "status": status.HTTP_200_OK,
+        #         "information": plan
+        #     }
+        # return Response(response_data, status=status.HTTP_200_OK)
         
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
