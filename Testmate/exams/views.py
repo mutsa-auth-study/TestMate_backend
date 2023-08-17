@@ -13,8 +13,9 @@ from locations.pagination import CustomPageNumberPagination
 
 import xml.etree.ElementTree as ET
 import requests
-
-class ExamListView(APIView):
+'''
+# 메인 화면 API
+class ExamMainView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
@@ -24,6 +25,37 @@ class ExamListView(APIView):
         if request.user.is_authenticated:
             # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
             exam_favorites = ExamFavorite.objects.filter(user=request.user.id)
+            favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
+    
+            # 즐찾 여부 확인
+            for exam in exam_list:
+                if exam.exam_id in favorite_exam_ids:
+                    exam["is_favorite"] = True
+                else:
+                    exam["is_favorite"] = False
+            # 미로그인 사용자는 모두 즐찾X
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        #     for exam in exam_list:
+        #         exam["is_favorite"] = False
+
+        # # 시험들의 리스트 반환
+        # response_data = {
+        #     "status": status.HTTP_200_OK,
+        #     "information": exam_list
+        # }
+        # return Response(response_data, status=status.HTTP_200_OK)
+    '''
+class ExamListView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        data = Exam.objects.all()
+        exam_list = list(data.values())  # 시험 정보를 담을 리스트 초기화
+        
+        if request.user.is_authenticated:
+            # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
+            exam_favorites = ExamFavorite.objects.filter(user=request.user.pk)
             favorite_exam_ids = [exam_favorite.exam_id for exam_favorite in exam_favorites]
     
             # 즐찾 여부 확인
