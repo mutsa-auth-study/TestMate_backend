@@ -60,7 +60,7 @@ class ExamListView(APIView):
     
             # 즐찾 여부 확인
             for exam in exam_list:
-                if exam.exam_id in favorite_exam_ids:
+                if exam["exam_id"] in favorite_exam_ids:
                     exam["is_favorite"] = True
                 else:
                     exam["is_favorite"] = False
