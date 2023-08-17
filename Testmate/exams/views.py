@@ -88,7 +88,7 @@ class ExamListView(APIView):
         return paginator.get_paginated_response(serializer.data)
   
 class ExamDetailView(APIView):
-    permission_classes = [AllowAny]
+
     decodedKey = "WKylCY9PiFAjyG1rstW8XGqQbs7lkyQWXRGIpZDC5RNJnSdK9W0BaUJF5KPRI6Y2e2VsiB9loeLTG/+8nJcLHw=="
 
     # 시험 일정
@@ -108,6 +108,7 @@ class ExamDetailView(APIView):
             serializer = ExamRecentSerializer(data=recent_data)
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
+                print("최근 조회 등록")
 
             # 현재 저장된 조회 정보의 개수 체크
             count = ExamRecent.objects.filter(user_id=userID).count()
@@ -116,6 +117,7 @@ class ExamDetailView(APIView):
             if count > 10:
                 oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
                 oldest_exam.delete()
+                print("10개 초과 삭제")
 
         # DB에서 해당 시험 일정 저장된 것 있는지 확인
         db = ExamPlan.objects.filter(exam_id=examID)
@@ -161,11 +163,12 @@ class ExamDetailView(APIView):
             serializer = ExamDetailSerializer(data=dict)
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
-            response_data = {
+                response_data = {
                     "status": status.HTTP_200_OK,
                     "information": dict
                 }
-            return Response(response_data, status=status.HTTP_200_OK)
+                return Response(response_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             plan.append(dict)
         
         # response_data = {

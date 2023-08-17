@@ -40,8 +40,8 @@ class getLocationComment(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
-# 고사장 리뷰 작성 [POST][/location/comment]
-class createLocationComment(APIView):
+# 고사장 리뷰 [POST][PATCH][DELETE][/location/comment]
+class LocationCommentView(APIView):
     
     # 로그인한 사용자만 접근 가능
     permission_classes = [permissions.IsAuthenticated]
@@ -53,11 +53,6 @@ class createLocationComment(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 고사장 리뷰 수정 [PATCH][/location/comment]
-class updateLocationComment(APIView):
-
-    # 로그인한 사용자만 접근 가능
-    permission_classes = [permissions.IsAuthenticated]
 
     # 게시물이 존재하는지 확인하는 메소드
     # 존재한다면 -> 해당 게시물 가져옴 / 존재하지 않는다면 -> None 반환
@@ -83,19 +78,6 @@ class updateLocationComment(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
-
-# 고사장 리뷰 삭제 [DELETE][/location/comment/]
-class deleteLocationComment(APIView):
-    
-    # 로그인한 사용자만 접근 가능
-    permission_classes = [permissions.IsAuthenticated]
-
-    # 게시물이 존재하는지 확인하는 메소드
-    def get_object(self, user_id, location_id):
-        try:
-            return LocationComment.objects.get(user_id=user_id, location_id=location_id)
-        except LocationComment.DoesNotExist:
-            return None
 
     def delete(self, request, user_id, location_id, *args, **kwargs):
         comment = self.get_object(user_id,location_id)
@@ -142,6 +124,8 @@ class NearestLocation(APIView):
         
         # request_body에서 위도 경도 가져오기
         request_data = request.data
+        print(request)
+        print(request.data)
         lon = float(request_data.get('longitude'))
         lat = float(request_data.get('latitude'))
         

@@ -7,11 +7,11 @@ User = get_user_model()
 
 class Exam(models.Model):
     exam_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    qualgbcd = models.CharField(max_length=100) # 자격구분
+    qualgbCd = models.CharField(max_length=100) # 자격구분
     qualgbnm = models.CharField(max_length=100) # 자격구분명
     seriescd = models.CharField(max_length=100) #계열코드
     seriesnm = models.CharField(max_length=100) # 계열명
-    jmcd = models.CharField(max_length=100) # 종목코드
+    jmCd = models.CharField(max_length=100) # 종목코드
     jmfldnm = models.CharField(max_length=100) # 종목명
     obligfldcd = models.CharField(max_length=100, blank=True) # 대직무분야코드
     obligfldnm = models.CharField(max_length=100, blank=True) # 대직무분야명
