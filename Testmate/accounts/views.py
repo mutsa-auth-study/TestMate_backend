@@ -1,4 +1,3 @@
-import uuid
 import json
 from accounts.models import User, UserManager
 from allauth.socialaccount.models import SocialAccount
@@ -15,7 +14,7 @@ from rest_framework.response import Response
 from .serializers import UserInfoSerializer
 from rest_framework import permissions
 from rest_framework.views import APIView
-
+import uuid
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -99,7 +98,7 @@ class KakaoLogin(SocialLoginView):
     client_class = OAuth2Client
     callback_url = KAKAO_CALLBACK_URI
 
-''' #구현중
+
 class DeleteUser(APIView):
     
     # 로그인한 사용자만 접근 가능
@@ -113,14 +112,10 @@ class DeleteUser(APIView):
             return None
 
     def delete(self, request, *args, **kwargs):
-        user = self.get_object(request.data.get("user_id"))
-        if comment is None:
+        userID = request.data.get("user_id")
+        user = self.get_object(userID)
+        if user is None:
             return Response({"error": "User is not found"}, status=status.HTTP_204_NO_CONTENT)
         
-        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
-        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
-            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-        
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
-'''
+        user.delete()
+        return Response(status=status.HTTP_200_OK) # 삭제 성공
