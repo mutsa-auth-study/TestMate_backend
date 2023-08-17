@@ -71,6 +71,7 @@ def kakao_callback(request):
         response_body = serializer.data
         # response_body['user_id'] = response_body.pop('pk')
         response_body['accessToken'] = str(refresh.access_token) # Replace with the actual access token
+        print(response_body['accessToken'])
         return Response({'information':response_body}, status= status.HTTP_201_CREATED)
 
     except User.DoesNotExist:
@@ -91,6 +92,7 @@ def kakao_callback(request):
         response_body = serializer.data
         response_body['user_id'] = response_body.pop('kakao_id')
         response_body['accessToken'] = str(refresh.access_token) # Replace with the actual access token
+        print(response_body['accessToken'])
         return Response({'information':response_body}, status= status.HTTP_201_CREATED)
 
 class KakaoLogin(SocialLoginView):
