@@ -275,7 +275,7 @@ class ExamFavoriteView(APIView):
     def delete(self, request):
         # DELETE 하는동안 다른 요청 보류
         with lock:
-            user_id = request.data.get('id')
+            user_id = request.user.id
             exam_id = request.data.get('exam_id')
 
             try:
