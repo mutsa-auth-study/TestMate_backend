@@ -263,7 +263,11 @@ class ExamFavoriteView(APIView):
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
                 print("즐찾 등록 성공")
-                return Response(status=status.HTTP_200_OK)
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+                
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # 즐겨찾기 시험 정보 삭제(delete)
