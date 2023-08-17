@@ -215,6 +215,7 @@ class ExamFavoriteView(APIView):
     # ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
 
     def get(self, request):
+        # 인증
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -222,20 +223,27 @@ class ExamFavoriteView(APIView):
 
         # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
         favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+        # 이미 favorite_exam_ids는 리스트
+        # favorite_exam_ids에는 즐찾 시험id가 들어있음
 
-        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 가져와서 리스트로 반환
-        favorite_exams = Exam.objects.filter(id__in=favorite_exam_ids)
-
+        '''
         exam_list = []
-        for exam in favorite_exams:
-            exam_data = ExamTotalSerializer(exam).data  # 시험 시리얼라이징
+        for id in favorite_exam_ids:
+            exam = Exam.objects.get(exam_id = id)
+            exam_list.append(exam)
+        '''
+        # 최적화
+        exams = Exam.objects.filter(exam_id__in=favorite_exam_ids)
 
-            # is_favorite 값을 모두 True로 설정
-            exam_data['is_favorite'] = True
+        # 시리얼라이징
+        serializer = ExamTotalSerializer(exams, many=True)
 
-            exam_list.append(exam_data)
-
-        return Response(exam_list, status=status.HTTP_200_OK)
+        # 반환
+        response_data = {
+                    "status": status.HTTP_200_OK,
+                    "information": serializer.data
+                }
+        return Response(response_data, status=status.HTTP_200_OK)
 
     # 즐겨찾기 등록
     def post(self, request):
