@@ -220,8 +220,25 @@ class ExamFavoriteView(APIView):
         return Response({"information": [{"exam_id": exam_id} for exam_id in added_exam_ids]}, status=status.HTTP_201_CREATED)
 
     # 즐겨찾기 시험 정보 삭제(delete)
-    # def delete(self, request):
+    def delete(self, request):
+        
+        user_id = request.data.get('user_id')
+        exam_id = request.data.get('exam_id')
 
+        # 요청 데이터에 user_id 또는 exam_id가 없으면 실패 응답 반환
+        if not user_id or not exam_id:
+            return Response({"detail": "user_id and exam_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # 해당 즐겨찾기 항목 삭제
+            favorite = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
+            favorite.delete()
+
+            return Response({"detail": "Delete Success"}, status=status.HTTP_200_OK)
+        
+        # 해당 즐겨찾기 항목이 존재하지 않는 경우
+        except ExamFavorite.DoesNotExist:
+            return Response({"detail": "Favorite exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
 # 최근조회 시험 조회 [GET] [exam/recent]
 class ExamRecentView(APIView):
