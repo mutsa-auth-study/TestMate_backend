@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'social_django',
 
     # django-rest-auth
-    'rest_framework',
+    'rest_framework',   # 3.13.3 버전
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_auth',
@@ -83,6 +83,17 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+#JWT Settings
+REST_USE_JWT = True # dj_rest_auth.registration.views.SocialLoginView 써야해서
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+
 SITE_ID = 1
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -98,7 +109,7 @@ KAKAO_REDIRECT_URI = env('kakao_redirect_uri')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -109,13 +120,19 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10, # 원하는 페이지당 항목 수를 설정
 }
 
+REST_AUTH = {   # 혹시 몰라 추가
+    'USE_JWT': True,
+    'SESSION_LOGIN': False,
+    'JWT_AUTH_HTTPONLY': False,
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
