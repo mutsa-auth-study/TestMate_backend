@@ -95,7 +95,7 @@ class LocationCommentView(APIView):
 class getMyComment(APIView):
     # 로그인한 사용자만 접근 가능
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def get(self, request, *args, **kwargs):
         userID = request.user.id
         locationComment = LocationComment.objects.filter(user_id=userID)
@@ -126,8 +126,10 @@ class NearestLocation(APIView):
         request_data = request.data
         print(request)
         print(request.data)
-        lon = float(request_data.get('longitude'))
+        
         lat = float(request_data.get('latitude'))
+        lon = float(request_data.get('longitude'))
+        
         
         # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
         all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longitude'))
