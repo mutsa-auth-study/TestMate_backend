@@ -14,6 +14,7 @@ from testmate.settings import KAKAO_REDIRECT_URI
 from rest_framework.response import Response
 from .serializers import UserInfoSerializer
 from rest_framework import permissions
+from rest_framework.views import APIView
 
 
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -97,3 +98,29 @@ class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
     callback_url = KAKAO_CALLBACK_URI
+
+''' #구현중
+class DeleteUser(APIView):
+    
+    # 로그인한 사용자만 접근 가능
+    permission_classes = [permissions.IsAuthenticated]
+
+    # 유저가 존재하는지 확인하는 메소드
+    def get_object(self, user_id):
+        try:
+            return User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return None
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object(request.data.get("user_id"))
+        if comment is None:
+            return Response({"error": "User is not found"}, status=status.HTTP_204_NO_CONTENT)
+        
+        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
+        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
+            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
+'''
