@@ -23,27 +23,28 @@ class ExamMainView(APIView):
     #permission_classes = [AllowAny]
     
     def get(self, request):
-        print("안녕")
 
         # 비로그인
         if not request.user.is_authenticated:
             # 최근 유저들이 많이 본 시험 3-5 제공
             popular_exams = ExamRecent.objects.values('exam_id').annotate(view_count=Count('exam_id')).order_by('-view_count')
-            top_5_popular_exams = popular_exams[:5]
+            # top_5_popular_exams = popular_exams[:5]
+
+            examsList = [item['exam_id'] for item in popular_exams[:5]]
 
         # 로그인
-        # 유저가 즐찾한 시험의 정보 제공 - Exam, Examplan
-        user_id =request.user.id
-        # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
-        favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+        else:
+            user_id =request.user.id
+            # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
+            examsList= ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
 
         # favorite_exam_ids 리스트 내 시험 id를 Exam , ExamPlan 에서 정보 가져오기
-        data1 = Exam.objects.filter(exam_id__in=favorite_exam_ids)
-        data2 = ExamPlan.objects.filter(exam_id__in=favorite_exam_ids)
+        data1 = Exam.objects.filter(exam_id__in=examsList)
+        data2 = ExamPlan.objects.filter(exam_id__in=examsList)
 
         examsList = data1.values()
         examsPlanList = data2.values()
-        
+    
         for exam in examsList:
             for examPlan in examsPlanList:
                 exam.update(examPlan)
