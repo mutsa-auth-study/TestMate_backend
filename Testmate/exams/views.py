@@ -103,8 +103,10 @@ class ExamDetailView(APIView):
                 userID = request.user.id
                 
                 # 이미 봤으면 패스
+                print("조회 정보 확인")
                 exam = ExamRecent.objects.filter(user_id = userID, exam_id = examID)
-                
+                print(exam)
+                print(len(exam))
                 if len(exam): raise
                 print("새로 조회")
                 # 새로운 조회 정보를 저장
