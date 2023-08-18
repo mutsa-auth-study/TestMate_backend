@@ -3,6 +3,8 @@ from rest_framework import generics
 #from rest_framework import viewsets
 from uuid import UUID
 from django.views import View
+from django.db.models import Q
+
 
 from .models import LocationComment, LocationInfo # 모델
 from .serializers import LocationCommentSerializer, LocationInfoSerializer # 시리얼라이저
@@ -23,6 +25,11 @@ from rest_framework.permissions import AllowAny
 
 from accounts.models import User
 from accounts.serializers import UserInfoSerializer
+import requests
+from threading import Lock
+
+lock = Lock()
+
 
 # 고사장 리뷰 조회 [GET][/location/comment/<uuid:location_id>] #location_id는 고사장 id
 class getLocationComment(APIView):
@@ -92,18 +99,34 @@ class LocationCommentView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, user_id, location_id, *args, **kwargs):
-        comment = self.get_object(user_id,location_id)
-        if comment is None:
-            return Response({"error": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
-        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
-            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-        
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT) # 삭제 성공
+    # def delete(self):
+    #     with lock:
+    #         try:
+    #             comment = LocationComment.objects.get('location_comment_id')
+    #             comment.delete()
+    #             response_data = {
+    #                 "status": status.HTTP_200_OK,
+    #             }
+    #             return Response(response_data, status=status.HTTP_200_OK) # 삭제 성공
+    #         # 해당 즐겨찾기 항목이 존재하지 않는 경우
+    #         except LocationComment.DoesNotExist:
+    #             return Response({"detail": "Favorite exam not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+class DeleteComment(APIView):
+    def delete(self,request, *args, **kwargs):
+        with lock:
+            location_comment_id = kwargs.get('location_comment_id')
+            try:
+                comment = LocationComment.objects.filter(location_comment_id = location_comment_id)
+                comment.delete()
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                }
+                return Response(response_data, status=status.HTTP_200_OK) # 삭제 성공
+            # 해당 즐겨찾기 항목이 존재하지 않는 경우
+            except LocationComment.DoesNotExist:
+                return Response({"detail": "Favorite exam not found"}, status=status.HTTP_400_BAD_REQUEST)
+  
 # 작성 고사장 리뷰 조회 [GET][/location/mycomment] 
 class getMyComment(APIView):
     # 로그인한 사용자만 접근 가능
