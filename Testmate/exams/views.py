@@ -308,16 +308,16 @@ class ExamRecentView(APIView):
         # recent_exams_ids에는 최근조회 시험id 10개 들어있음
 
         recent_exams_ids = ExamRecent.objects.filter(user_id=user_id).values_list('exam_id',flat=True)
-        
+        favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
         # 최적화
         # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
         #exams = Exam.objects.filter(exam_id__in=recent_exams_ids)
         data = Exam.objects.filter(exam_id__in=recent_exams_ids)
         exam_list = list(data.values())
-        
+
         # 즐찾 여부 확인
         for exam in exam_list:
-            if exam["exam_id"] in recent_exams_ids:
+            if exam["exam_id"] in favorite_exam_ids:
                 exam["is_favorite"] = True
             else:
                 exam["is_favorite"] = False
