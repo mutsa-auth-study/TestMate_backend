@@ -117,7 +117,7 @@ class DeleteUser(APIView):
         userID = request.data.get("user_id")
         user = self.get_object(userID)
         if user is None:
-            return Response({"error": "User is not found"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"error": "User is not found"}, status=status.HTTP_400_BAD_REQUEST)
         
         user.delete()
         return Response(status=status.HTTP_200_OK) # 삭제 성공
