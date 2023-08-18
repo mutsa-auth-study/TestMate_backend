@@ -10,6 +10,7 @@ from django.shortcuts import get_list_or_404
 import uuid
 
 from locations.pagination import CustomPageNumberPagination
+from django.db.models import Count
 
 import xml.etree.ElementTree as ET
 import requests
@@ -17,12 +18,47 @@ from threading import Lock
 
 lock = Lock()
 
-'''
+
 # 메인 화면 API
 class ExamMainView(APIView):
-    permission_classes = [AllowAny]
+    #permission_classes = [AllowAny]
     
     def get(self, request):
+
+
+        # 비로그인
+        if not request.user.is_authenticated:
+            # 최근 유저들이 많이 본 시험 3-5 제공
+            popular_exams = ExamRecent.objects.values('exam_id').annotate(view_count=Count('exam_id')).order_by('-view_count')
+            top_5_popular_exams = popular_exams[:5]
+
+        # 로그인
+        # 유저가 즐찾한 시험의 정보 제공 - Exam, Examplan
+        user_id =request.user.id
+        # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
+        favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+
+        # favorite_exam_ids 리스트 내 시험 id를 Exam , ExamPlan 에서 정보 가져오기
+        exams1 = Exam.objects.filter(exam_id__in=favorite_exam_ids)
+        exams2 = Exam.objects.filter(exams_id__in=favorite_exam_ids)
+    
+        # exams는 Exam과 ExamPlan 정보 모두 담은 리스트형태
+        # exams = exams1 + exams2
+
+        # 시리얼라이징
+        exam1_serializer = ExamTotalSerializer(exams1, many=True)
+        exam2_serializer = ExamDetailSerializer(exams2, many=True)
+
+        serialized_data = exam1_serializer.data + exam2_serializer.data
+
+        # 반환
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": serialized_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+'''
         data = Exam.objects.all()
         exam_list = list(data.values())  # 시험 정보를 담을 리스트 초기화
         
@@ -44,12 +80,9 @@ class ExamMainView(APIView):
         #         exam["is_favorite"] = False
 
         # # 시험들의 리스트 반환
-        # response_data = {
-        #     "status": status.HTTP_200_OK,
-        #     "information": exam_list
-        # }
-        # return Response(response_data, status=status.HTTP_200_OK)
-    '''
+        '''
+
+# 시험 목록 조회
 class ExamListView(APIView):
     permission_classes = [AllowAny]
     
@@ -216,6 +249,7 @@ class ExamFavoriteView(APIView):
     # ExamFavorite 테이블에서 유저 id에 해당하는 시험 id 쭉 가져오고 해당 시험 id에 해당하는 시험정보를 is_favorite 속성을 다 True로 채운 후에 추가해서 응답할
 
     def get(self, request):
+        # 인증
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -223,20 +257,28 @@ class ExamFavoriteView(APIView):
 
         # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
         favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+        # 이미 favorite_exam_ids는 리스트
+        # favorite_exam_ids에는 즐찾 시험id가 들어있음
 
-        # 해당 시험 ID에 해당하는 시험 정보 전체 테이블에서 가져와서 리스트로 반환
-        favorite_exams = Exam.objects.filter(id__in=favorite_exam_ids)
-
+        '''
         exam_list = []
-        for exam in favorite_exams:
-            exam_data = ExamTotalSerializer(exam).data  # 시험 시리얼라이징
+        for id in favorite_exam_ids:
+            exam = Exam.objects.get(exam_id = id)
+            exam_list.append(exam)
+        '''
+        # 최적화
+        # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
+        exams = Exam.objects.filter(exam_id__in=favorite_exam_ids)
 
-            # is_favorite 값을 모두 True로 설정
-            exam_data['is_favorite'] = True
+        # 시리얼라이징
+        serializer = ExamTotalSerializer(exams, many=True)
 
-            exam_list.append(exam_data)
-
-        return Response(exam_list, status=status.HTTP_200_OK)
+        # 반환
+        response_data = {
+                    "status": status.HTTP_200_OK,
+                    "information": serializer.data
+                }
+        return Response(response_data, status=status.HTTP_200_OK)
 
     # 즐겨찾기 등록
     def post(self, request):
@@ -297,20 +339,36 @@ class ExamFavoriteView(APIView):
 
 # 최근조회 시험 조회 [GET] [exam/recent]
 class ExamRecentView(APIView):
-    # 인증
-    permission_classes = [permissions.IsAuthenticated]
+    def get(self,request):
 
-    def get(self, request):
-        # user_id를 인증된 사용자로부터 얻음
+    # 인증
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
         user_id = request.user.id
 
-        # 가장 최근 조회한 10개 정보 가져오기
-        recent_exams = get_list_or_404(ExamRecent, user_id=user_id)[:10]
+        # 최근 조회 시험이 없다면 404 반환
+        recent_exams_ids = get_list_or_404(ExamRecent.objects.order_by('-recent_id'), user_id=user_id)[:10]
+        # recent_exams_ids 리스트 형태
+        # recent_exams_ids에는 최근조회 시험id 10개 들어있음
 
-        # 시리얼라이저를 통해 JSON으로 변환
-        serializer = ExamRecentSerializer(recent_exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        '''
+        # 이건 404 반환 안하는 버전
+        recent_exams_ids = ExamRecent.objects.filter(user_id=user_id).order_by('-recent_id')[:10]
+        '''
+        # 최적화
+        # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
+        exams = Exam.objects.filter(exams_id__in=recent_exams_ids)
 
+        # 시리얼라이징
+        serializer = ExamTotalSerializer(exams, many=True)
+
+        # 반환
+        response_data  = {
+                    "status" : status.HTTP_200_OK,
+                    "information" : serializer.data ,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 '''
 # 호출은 되지만 xml 읽기에 실패하는듯. 아래에 파일 직접 읽어서 성공함.
