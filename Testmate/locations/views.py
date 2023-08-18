@@ -151,7 +151,7 @@ class NearestLocation(APIView):
             print(i)
 
         #JsonResponse로 반환
-        response_data = []
+        location_list = []
         for item in nearest10:
             # location_id를 이용해 LocationInfo DB에서 해당 고사장의 모든 정보 가져오기
             location_instance = LocationInfo.objects.get(location_id=item[0])
@@ -160,8 +160,13 @@ class NearestLocation(APIView):
             location_data = LocationInfoSerializer(location_instance).data
             location_data['distance'] = item[1]
 
-            response_data.append(location_data)
+            location_list.append(location_data)
             
+        # 시험들의 리스트 반환
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": location_list
+        }
         return Response(response_data, status=status.HTTP_200_OK)
 
 
