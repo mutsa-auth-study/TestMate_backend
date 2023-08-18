@@ -34,11 +34,21 @@ class getLocationComment(APIView):
             return Response({"detail": "Location comment not found"}, status=status.HTTP_404_NOT_FOUND)
         
         # 페이지네이션 적용
-        paginator = CustomPageNumberPagination()
-        paginated_comments = paginator.paginate_queryset(locationComment,request)
-        serializer = LocationCommentSerializer(paginated_comments, many=True)
+        #paginator = CustomPageNumberPagination()
+        #paginated_comments = paginator.paginate_queryset(locationComment,request)
+        #serializer = LocationCommentSerializer(paginated_comments, many=True)
 
-        return paginator.get_paginated_response(serializer.data)
+        #return paginator.get_paginated_response(serializer.data)
+    
+
+        serializer = LocationCommentSerializer(locationComment, many=True)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 # 고사장 리뷰 [POST][PATCH][DELETE][/location/comment]
 class LocationCommentView(APIView):
