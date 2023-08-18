@@ -127,9 +127,13 @@ class NearestLocation(APIView):
         print(request)
         print(request.data)
         
-        lat = float(request_data.get('latitude'))
-        lon = float(request_data.get('longitude'))
-        
+        lat = request_data.get('latitude')
+        lon = request_data.get('longitude')
+        print(lat)
+        print(lon)
+
+        lat = float(lat)
+        lon = float(lon)
         
         # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
         all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longitude'))
