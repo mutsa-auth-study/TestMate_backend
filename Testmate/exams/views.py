@@ -99,6 +99,7 @@ class ExamDetailView(APIView):
         examID = kwargs.get('exam_id')
         # 로그인 된 경우 최근 본 시험 데이터 등록
         try :
+            print("최근 조회 등록 시도")
             if request.user.is_authenticated:
                 userID = request.user.id
                 
