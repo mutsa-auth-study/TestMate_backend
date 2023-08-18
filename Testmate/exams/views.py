@@ -299,11 +299,6 @@ class ExamFavoriteView(APIView):
             # 요청 데이터에서 즐겨찾기할 시험 ID 가져오기
             exam_id = request.data.get('exam_id')
 
-            # 즐찾 이미 된거면 오류
-            check = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
-            if check:
-                return Response({"detail": "the exam is already favotirte"}, status=status.HTTP_400_BAD_REQUEST)
-            
             # 현재 즐겨찾기한 시험 ID 개수 확인
             favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
             # 즐겨찾기한 시험 개수가 10개 이상이면 실패 응답 반환
