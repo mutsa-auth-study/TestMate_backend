@@ -106,10 +106,18 @@ class ExamDetailView(APIView):
                 # 이미 봤으면 패스
                 print("조회 정보 확인")
                 exam = ExamRecent.objects.filter(user_id = userID, exam_id = examID)
-                print(exam)
-                print(len(exam))
                 if len(exam) != 0: raise
                 print("새로 조회")
+
+                # 현재 저장된 조회 정보의 개수 체크
+                count = len(ExamRecent.objects.filter(user_id=userID))
+
+                # 10개 초과하는 경우 가장 오래된 정보 삭제
+                if count > 10:
+                    oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
+                    oldest_exam.delete()
+                    print("10개 초과 삭제")
+                
                 # 새로운 조회 정보를 저장
                 recent_data = {"user_id":userID, "exam_id":examID}
                 serializer = ExamRecentSerializer(data=recent_data)
@@ -120,14 +128,6 @@ class ExamDetailView(APIView):
                 else:
                     print("최근 조회 등록 실패")
                 
-                # 현재 저장된 조회 정보의 개수 체크
-                count = ExamRecent.objects.filter(user_id=userID).count()
-
-                # 10개 초과하는 경우 가장 오래된 정보 삭제
-                if count > 10:
-                    oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
-                    oldest_exam.delete()
-                    print("10개 초과 삭제")
             else:
                 print("인증 실패")
 

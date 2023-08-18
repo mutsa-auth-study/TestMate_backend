@@ -73,7 +73,7 @@ class LocationCommentView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    print("dfdfa")
+    
     # 게시물이 존재하는지 확인하는 메소드
     # 존재한다면 -> 해당 게시물 가져옴 / 존재하지 않는다면 -> None 반환
     # 메인 로직에서는 객체가 None인지만 확인하면 됨
@@ -83,21 +83,22 @@ class LocationCommentView(APIView):
         except LocationComment.DoesNotExist:
             return None
         
-    def patch(self, request, user_id, location_id, *args, **kwargs):
-        comment = self.get_object(user_id,location_id)
+    def patch(self, request, *args, **kwargs):
+        locationCommentID = exam_id = request.data.get('location_comment_id')
+        comment = LocationComment.objects.get(location_comment_id = locationCommentID)
+
         if comment is None:
-            return Response({"error": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Comment not found"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 인증된 사용자와 게시물의 작성자가 동일한지 확인
-        if request.user.id != UUID(user_id): #user_id가 string으로 오면 UUID로 변환
-            return Response({"error":"Permission denied"}, status=status.HTTP_403_FORBIDDEN)
-        
-        serializer = LocationCommentSerializer(comment, data=request.data, partial=True) 
+        serializer = LocationCommentSerializer(comment, data=request.data, partial=True)
         # partial=True로 설정하여 부분 수정 가능
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
+            response_data = {
+                "status": status.HTTP_200_OK
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
     # def delete(self):
     #     with lock:
