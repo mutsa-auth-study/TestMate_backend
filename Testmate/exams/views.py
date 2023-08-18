@@ -183,19 +183,60 @@ class ExamDetailView(APIView):
         # plan = []
         for item in root.findall('.//item'):
             dict = {}
-            dict["implYy"] = item.find('implYy').text
-            dict["implSeq"] = item.find('implSeq').text
-            dict["description"] = item.find('description').text
-            dict["docRegStartDt"] = item.find('docRegStartDt').text
-            dict["docRegEndDt"] = item.find('docRegEndDt').text
-            dict["docExamStartDt"] = item.find('docExamStartDt').text
-            dict["docExamEndDt"] = item.find('docExamEndDt').text
-            dict["docPassDt"] = item.find('docPassDt').text
-            dict["pracRegStartDt"] = item.find('pracRegStartDt').text
-            dict["pracRegEndDt"] = item.find('pracRegEndDt').text
-            dict["pracExamStartDt"] = item.find('pracExamStartDt').text
-            dict["pracExamEndDt"] = item.find('pracExamEndDt').text
-            dict["pracPassDt"] = item.find('pracPassDt').text
+            implYy = item.find('implYy').text
+            if implYy == None:
+                implYy = " "
+            implSeq = item.find('implSeq').text
+            if implSeq == None:
+                implSeq = " "
+            description = item.find('description').text
+            if description == None:
+                description = " "
+            docRegStartDt = item.find('docRegStartDt').text
+            if docRegStartDt == None:
+                docRegStartDt = " "
+            docRegEndDt = item.find('docRegEndDt').text
+            if docRegEndDt == None:
+                docRegEndDt = " "
+            docExamStartDt = item.find('docExamStartDt').text
+            if docExamStartDt == None:
+                docExamStartDt= " "
+            docExamEndDt = item.find('docExamEndDt').text
+            if docExamEndDt == None:
+                docExamEndDt = " "
+            docPassDt = item.find('docPassDt').text
+            if docPassDt == None:
+                docPassDt = " "
+            pracRegStartDt = item.find('pracRegStartDt').text
+            if pracRegStartDt == None:
+                docPassDt= " "
+            pracRegEndDt = item.find('pracRegEndDt').text
+            if pracRegEndDt == None:
+                docPassDt = " "
+            pracExamStartDt = item.find('pracExamStartDt').text
+            if pracExamStartDt == None:
+                pracExamStartDt = " "
+            pracExamEndDt = item.find('pracExamEndDt').text
+            if pracExamEndDt == None:
+                pracExamEndDt = " "
+            pracPassDt = item.find('pracPassDt').text
+            if pracPassDt == None:
+                pracPassDt = " "
+            
+            dict["implYy"] = implYy
+            dict["implSeq"] = implSeq
+            dict["description"] = description
+            dict["docRegStartDt"] = docRegStartDt
+            dict["docRegEndDt"] = docRegEndDt
+            dict["docExamStartDt"] = docExamStartDt
+            dict["docExamEndDt"] = docExamEndDt
+            dict["docPassDt"] = docPassDt
+            dict["pracRegStartDt"] = pracRegStartDt
+            dict["pracRegEndDt"] = pracRegEndDt
+            dict["pracExamStartDt"] = pracExamStartDt
+            dict["pracExamEndDt"] = pracExamEndDt
+            dict["pracPassDt"] = pracPassDt
+            
             dict["exam_id"] = examID
 
             serializer = ExamDetailSerializer(data=dict)
@@ -205,7 +246,7 @@ class ExamDetailView(APIView):
                 serializer.save()  # 데이터베이스에 저장
                 response_data = {
                     "status": status.HTTP_200_OK,
-                    "information": dict
+                    "information": [dict]
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
             return Response(status=status.HTTP_304_NOT_MODIFIED)
