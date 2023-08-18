@@ -18,13 +18,12 @@ from threading import Lock
 
 lock = Lock()
 
-
 # 메인 화면 API
 class ExamMainView(APIView):
     #permission_classes = [AllowAny]
     
     def get(self, request):
-
+        print("안녕")
 
         # 비로그인
         if not request.user.is_authenticated:
@@ -141,6 +140,8 @@ class ExamDetailView(APIView):
             recent_data = {}
             recent_data["user_id"] = userID
             recent_data["exam_id"] = examID
+
+            print("hi")
 
             # 새로운 조회 정보를 저장
             serializer = ExamRecentSerializer(data=recent_data)

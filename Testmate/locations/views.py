@@ -52,7 +52,6 @@ class getLocationComment(APIView):
 
 # 고사장 리뷰 [POST][PATCH][DELETE][/location/comment]
 class LocationCommentView(APIView):
-    
     # 로그인한 사용자만 접근 가능
     permission_classes = [permissions.IsAuthenticated]
 
@@ -62,8 +61,7 @@ class LocationCommentView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    print("dfdfa")
     # 게시물이 존재하는지 확인하는 메소드
     # 존재한다면 -> 해당 게시물 가져옴 / 존재하지 않는다면 -> None 반환
     # 메인 로직에서는 객체가 None인지만 확인하면 됨
