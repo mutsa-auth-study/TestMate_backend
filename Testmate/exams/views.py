@@ -298,25 +298,25 @@ class ExamRecentView(APIView):
         user_id = request.user.id
 
         # 최근 조회 시험이 없다면 404 반환
-        recent_exams_ids = get_list_or_404(ExamRecent.objects.order_by('-recent_id'), user_id=user_id)[:10]
+        # recent_exams_ids = get_list_or_404(ExamRecent.objects.order_by('-recent_id'), user_id=user_id)[:10]
         # recent_exams_ids 리스트 형태
         # recent_exams_ids에는 최근조회 시험id 10개 들어있음
 
-        '''
-        # 이건 404 반환 안하는 버전
-        recent_exams_ids = ExamRecent.objects.filter(user_id=user_id).order_by('-recent_id')[:10]
-        '''
+        recent_exams_ids = ExamRecent.objects.filter(user_id=user_id).values_list('exam_id',flat=True)
+        
         # 최적화
         # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
-        exams = Exam.objects.filter(exam_id__in=recent_exams_ids)
+        #exams = Exam.objects.filter(exam_id__in=recent_exams_ids)
+        data = Exam.objects.filter(exam_id__in=recent_exams_ids)
+        exam_list = list(data.values())
 
         # 시리얼라이징
-        serializer = ExamTotalSerializer(exams, many=True)
+        # serializer = ExamTotalSerializer(exams, many=True)
 
         # 반환
         response_data  = {
                     "status" : status.HTTP_200_OK,
-                    "information" : serializer.data ,
+                    "information" : exam_list ,
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
