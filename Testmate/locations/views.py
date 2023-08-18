@@ -124,13 +124,13 @@ class NearestLocation(APIView):
         
         # request_body에서 위도 경도 가져오기
         request_data = request.data
-        print(request)
-        print(request.data)
+        print(1,request)
+        print(2,request.data)
         
         lat = request_data.get('latitude')
         lon = request_data.get('longitude')
-        print(lat)
-        print(lon)
+        print(3,lat)
+        print(4,lon)
 
         lat = float(lat)
         lon = float(lon)
