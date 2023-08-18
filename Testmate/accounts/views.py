@@ -115,4 +115,7 @@ class DeleteUser(APIView):
             return Response({"error": "User is not found"}, status=status.HTTP_400_BAD_REQUEST)
         
         userObj.delete()
-        return Response(status=status.HTTP_200_OK) # 삭제 성공
+        response_data = {
+                "status": status.HTTP_200_OK,
+            }
+        return Response(response_data, status=status.HTTP_200_OK)
