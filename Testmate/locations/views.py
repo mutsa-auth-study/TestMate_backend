@@ -125,7 +125,7 @@ class getMyComment(APIView):
 class NearestLocation(APIView):
     permission_classes = [AllowAny]
 
-    def get(self,request, *args, **kwargs):
+    def post(self,request, *args, **kwargs):
         # 두 점 사이 거리
         def getDist(lon1, lat1, lon2,lat2):
             a = lon1 - lon2
@@ -134,12 +134,16 @@ class NearestLocation(APIView):
         
         # request_body에서 위도 경도 가져오기
         request_data = request.data
-        print(request)
-        print(request.data)
+        print(1,request)
+        print(2,request.data)
         
-        lat = float(request_data.get('latitude'))
-        lon = float(request_data.get('longitude'))
-        
+        lat = request_data.get('latitude')
+        lon = request_data.get('longitude')
+        print(3,lat)
+        print(4,lon)
+
+        lat = float(lat)
+        lon = float(lon)
         
         # LocationInfo DB에서 address 필드만 가져오기 (모든 고사장에 대해서)
         all_exam_location = list(LocationInfo.objects.values('location_id','latitude', 'longitude'))
@@ -157,7 +161,7 @@ class NearestLocation(APIView):
             print(i)
 
         #JsonResponse로 반환
-        response_data = []
+        location_list = []
         for item in nearest10:
             # location_id를 이용해 LocationInfo DB에서 해당 고사장의 모든 정보 가져오기
             location_instance = LocationInfo.objects.get(location_id=item[0])
@@ -166,8 +170,13 @@ class NearestLocation(APIView):
             location_data = LocationInfoSerializer(location_instance).data
             location_data['distance'] = item[1]
 
-            response_data.append(location_data)
+            location_list.append(location_data)
             
+        # 시험들의 리스트 반환
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": location_list
+        }
         return Response(response_data, status=status.HTTP_200_OK)
 
 
