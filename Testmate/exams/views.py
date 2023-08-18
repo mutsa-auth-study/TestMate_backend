@@ -128,7 +128,8 @@ class ExamDetailView(APIView):
                     oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
                     oldest_exam.delete()
                     print("10개 초과 삭제")
-                
+            else:
+                print("인증 실패")
 
             # DB에서 해당 시험 일정 저장된 것 있는지 확인
         except len(exam) != 0:
