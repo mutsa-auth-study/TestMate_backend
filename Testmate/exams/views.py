@@ -135,12 +135,16 @@ class ExamDetailView(APIView):
         if request.user.is_authenticated:
             userID = request.user.id
             recent_data = {"user_id":userID, "exam_id":examID}
-
+            print(recent_data)
             # 새로운 조회 정보를 저장
             serializer = ExamRecentSerializer(data=recent_data)
+            print("시리얼라이저 : ",serializer)
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
-                print("최근 조회 등록")
+                print("최근 조회 등록 성공")
+            else:
+                print(serializer.is_valid())
+                print("최근 조회 등록 실패")
                 
             ''''
             # 현재 저장된 조회 정보의 개수 체크
