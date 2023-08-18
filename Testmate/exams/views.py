@@ -45,7 +45,7 @@ class ExamMainView(APIView):
         examsPlanList = list(data2.values())
     
         for i in range(len(examsList)):
-            examsList[i].update(examsPlanList)
+            examsList[i].update(examsPlanList[i])
 
         response_data = {
             "status": status.HTTP_200_OK,
@@ -103,9 +103,12 @@ class ExamDetailView(APIView):
                 userID = request.user.id
                 
                 # 이미 봤으면 패스
-                exam = ExamRecent.objects.get(user_id = userID, exam_id = examID)
-                if exam: raise
-
+                print("조회 정보 확인")
+                exam = ExamRecent.objects.filter(user_id = userID, exam_id = examID)
+                print(exam)
+                print(len(exam))
+                if len(exam): raise
+                print("새로 조회")
                 # 새로운 조회 정보를 저장
                 recent_data = {"user_id":userID, "exam_id":examID}
                 serializer = ExamRecentSerializer(data=recent_data)
@@ -127,7 +130,7 @@ class ExamDetailView(APIView):
                 
 
             # DB에서 해당 시험 일정 저장된 것 있는지 확인
-        except exam.DoesNotExist:
+        except:
             print("이미 조회한 시험")
 
         # DB에 있으면 꺼내서 호출
