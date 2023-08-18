@@ -62,6 +62,7 @@ class LocationCommentView(APIView):
         if serializer.is_valid():
             serializer.save()
             response_data = {
+                "status": status.HTTP_200_OK,
                 "information": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
