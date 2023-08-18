@@ -109,7 +109,7 @@ class DeleteUser(APIView):
 
     def delete(self, request, *args, **kwargs):
         userID = request.user.id
-        userObj = User.data.get(id = 'userID')
+        userObj = User.objects.get(id = userID)
         
         if userObj is None:
             return Response({"error": "User is not found"}, status=status.HTTP_400_BAD_REQUEST)
