@@ -106,18 +106,13 @@ class DeleteUser(APIView):
     # 로그인한 사용자만 접근 가능
     permission_classes = [permissions.IsAuthenticated]
 
-    # 유저가 존재하는지 확인하는 메소드
-    def get_object(self, user_id):
-        try:
-            return User.objects.get(user_id=user_id)
-        except User.DoesNotExist:
-            return None
 
     def delete(self, request, *args, **kwargs):
-        userID = request.data.get("user_id")
-        user = self.get_object(userID)
-        if user is None:
+        userID = request.user.id
+        userObj = User.data.get(id = 'userID')
+        
+        if userObj is None:
             return Response({"error": "User is not found"}, status=status.HTTP_400_BAD_REQUEST)
         
-        user.delete()
+        userObj.delete()
         return Response(status=status.HTTP_200_OK) # 삭제 성공
