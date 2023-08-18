@@ -21,32 +21,32 @@ import requests
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny
 
+from accounts.models import User
+from accounts.serializers import UserInfoSerializer
+
 # 고사장 리뷰 조회 [GET][/location/comment/<uuid:location_id>] #location_id는 고사장 id
 class getLocationComment(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         location_id = kwargs.get('location_id')
-        print(location_id)
         locationComment = LocationComment.objects.filter(location_id_id=location_id)
+        locationComment = list(locationComment.values())
         print(locationComment)
-        # location_id와 일치하는 데이터가 없을 경우 400 응답을 반환
-        if not locationComment:
-            return Response({"detail": "Location comment not found"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 페이지네이션 적용
-        #paginator = CustomPageNumberPagination()
-        #paginated_comments = paginator.paginate_queryset(locationComment,request)
-        #serializer = LocationCommentSerializer(paginated_comments, many=True)
+        comment_list = []
 
-        #return paginator.get_paginated_response(serializer.data)
-    
+        for comment in locationComment:
+            print(comment)
+            writer_obj = User.objects.get(id=comment["user_id_id"])
+            writer_data = UserInfoSerializer(writer_obj).data
 
-        serializer = LocationCommentSerializer(locationComment, many=True)
+            comment["email"] = writer_data["email"]
+            comment_list.append(comment)
 
         response_data = {
             "status": status.HTTP_200_OK,
-            "information": serializer.data
+            "information": comment_list
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
@@ -61,6 +61,7 @@ class LocationCommentView(APIView):
         if serializer.is_valid():
             serializer.save()
             response_data = {
+                "status": status.HTTP_200_OK,
                 "information": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)

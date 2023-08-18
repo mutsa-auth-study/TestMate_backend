@@ -128,15 +128,12 @@ class ExamDetailView(APIView):
     # 시험 일정
     endPoint = "http://apis.data.go.kr/B490007/qualExamSchd/getQualExamSchdList"
 
-    def post(self, request):
-        #examID = kwargs.get("exam_id")
-        examID = request.exam.id
+    def post(self, request, *args, **kwargs):
+        examID = kwargs.get('exam_id')
         # 로그인 된 경우 최근 본 시험 데이터 등록
         if request.user.is_authenticated:
             userID = request.user.id
-            recent_data = {}
-            recent_data["user_id"] = userID
-            recent_data["exam_id"] = examID
+            recent_data = {"user_id":userID, "exam_id":examID}
 
             print("hi")
 
