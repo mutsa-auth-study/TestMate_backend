@@ -132,8 +132,9 @@ class ExamDetailView(APIView):
     # 시험 일정
     endPoint = "http://apis.data.go.kr/B490007/qualExamSchd/getQualExamSchdList"
 
-    def post(self, request, *args, **kwargs):
-        examID = kwargs.get("exam_id")
+    def post(self, request):
+        #examID = kwargs.get("exam_id")
+        examID = request.exam.id
         # 로그인 된 경우 최근 본 시험 데이터 등록
         if request.user.is_authenticated:
             userID = request.user.id
@@ -146,7 +147,8 @@ class ExamDetailView(APIView):
             if serializer.is_valid():
                 serializer.save()  # 데이터베이스에 저장
                 print("최근 조회 등록")
-
+                
+            ''''
             # 현재 저장된 조회 정보의 개수 체크
             count = ExamRecent.objects.filter(user_id=userID).count()
 
@@ -155,6 +157,7 @@ class ExamDetailView(APIView):
                 oldest_exam = ExamRecent.objects.filter(user_id=userID).earliest("recent_id")
                 oldest_exam.delete()
                 print("10개 초과 삭제")
+            '''
 
         # DB에서 해당 시험 일정 저장된 것 있는지 확인
         db = ExamPlan.objects.filter(exam_id=examID)

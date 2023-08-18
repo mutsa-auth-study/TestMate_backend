@@ -254,7 +254,7 @@ class deleteLocationDB(APIView):
             print('del')
         return Response(status=status.HTTP_205_RESET_CONTENT)
 '''
-
+'''
 # POST PATCH DELETE는 URL 동일 [location/comment/]
 # 따라서 같은 클래스 내에 위치해야함
 # 여러 HTTP 메소드를 한 클래스 내에서 다루기 위해 중앙 뷰 생성
@@ -272,3 +272,27 @@ class MainLocationCommentView(APIView) :
     
     def delete(self, request, user_id, location_id, *args, **kwargs):
         return deleteLocationComment.as_view()(request, user_id, location_id, *args, **kwargs)
+    
+'''
+# 내가 쓴 리뷰 조회 [GET] [/location/mycomment]
+class Mycomment(APIView):
+    def get(self,request):
+
+        # 인증
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
+        user_id = request.user.id
+
+        my_comment_ids = LocationComment.objects.filter(user_id=user_id).values_list('location_comment_id',flat=True)
+
+        comments = LocationComment.objects.filter(location_comment_id__in=my_comment_ids)
+
+        serializer=LocationCommentSerializer(comments, many=True)
+
+        response_data = {
+            "status" : status.HTTP_200_OK,
+            "information": serializer.data
+        }
+
+        return Response(response_data,status=status.HTTP_200_OK)
