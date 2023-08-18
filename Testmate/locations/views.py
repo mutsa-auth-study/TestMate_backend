@@ -27,11 +27,12 @@ class getLocationComment(APIView):
 
     def get(self, request, *args, **kwargs):
         location_id = kwargs.get('location_id')
-        locationComment = LocationComment.objects.filter(location_id=location_id)
-
-        # location_id와 일치하는 데이터가 없을 경우 404 응답을 반환
-        if not locationComment.exists():
-            return Response({"detail": "Location comment not found"}, status=status.HTTP_404_NOT_FOUND)
+        print(location_id)
+        locationComment = LocationComment.objects.filter(location_id_id=location_id)
+        print(locationComment)
+        # location_id와 일치하는 데이터가 없을 경우 400 응답을 반환
+        if not locationComment:
+            return Response({"detail": "Location comment not found"}, status=status.HTTP_400_BAD_REQUEST)
         
         # 페이지네이션 적용
         #paginator = CustomPageNumberPagination()
@@ -59,7 +60,10 @@ class LocationCommentView(APIView):
         serializer = LocationCommentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_data = {
+                "information": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     print("dfdfa")
     # 게시물이 존재하는지 확인하는 메소드

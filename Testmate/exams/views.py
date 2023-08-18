@@ -38,22 +38,19 @@ class ExamMainView(APIView):
         favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
 
         # favorite_exam_ids 리스트 내 시험 id를 Exam , ExamPlan 에서 정보 가져오기
-        exams1 = Exam.objects.filter(exam_id__in=favorite_exam_ids)
-        exams2 = Exam.objects.filter(exams_id__in=favorite_exam_ids)
-    
-        # exams는 Exam과 ExamPlan 정보 모두 담은 리스트형태
-        # exams = exams1 + exams2
+        data1 = Exam.objects.filter(exam_id__in=favorite_exam_ids)
+        data2 = ExamPlan.objects.filter(exam_id__in=favorite_exam_ids)
 
-        # 시리얼라이징
-        exam1_serializer = ExamTotalSerializer(exams1, many=True)
-        exam2_serializer = ExamDetailSerializer(exams2, many=True)
+        examsList = data1.values()
+        examsPlanList = data2.values()
+        
+        for exam in examsList:
+            for examPlan in examsPlanList:
+                exam.update(examPlan)
 
-        serialized_data = exam1_serializer.data + exam2_serializer.data
-
-        # 반환
         response_data = {
             "status": status.HTTP_200_OK,
-            "information": serialized_data
+            "information": examsList
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -92,7 +89,7 @@ class ExamListView(APIView):
         if request.user.is_authenticated:
             # 로그인한 사용자일 경우, 즐겨찾기한 시험 ID들을 가져와 리스트로 변환
             data = ExamFavorite.objects.filter(user_id=request.user.id)
-            exam_favorites = (data.values())
+            exam_favorites = data.values()
             favorite_exam_ids = [exam_favorite['exam_id_id'] for exam_favorite in exam_favorites]
             print(favorite_exam_ids)
             
