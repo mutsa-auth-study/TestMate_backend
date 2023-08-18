@@ -115,7 +115,7 @@ class getMyComment(APIView):
 class NearestLocation(APIView):
     permission_classes = [AllowAny]
 
-    def get(self,request, *args, **kwargs):
+    def post(self,request, *args, **kwargs):
         # 두 점 사이 거리
         def getDist(lon1, lat1, lon2,lat2):
             a = lon1 - lon2
