@@ -10,6 +10,7 @@ from django.shortcuts import get_list_or_404
 import uuid
 
 from locations.pagination import CustomPageNumberPagination
+from django.db.models import Count
 
 import xml.etree.ElementTree as ET
 import requests
@@ -17,12 +18,47 @@ from threading import Lock
 
 lock = Lock()
 
-'''
+
 # 메인 화면 API
 class ExamMainView(APIView):
-    permission_classes = [AllowAny]
+    #permission_classes = [AllowAny]
     
     def get(self, request):
+
+
+        # 비로그인
+        if not request.user.is_authenticated:
+            # 최근 유저들이 많이 본 시험 3-5 제공
+            popular_exams = ExamRecent.objects.values('exam_id').annotate(view_count=Count('exam_id')).order_by('-view_count')
+            top_5_popular_exams = popular_exams[:5]
+
+        # 로그인
+        # 유저가 즐찾한 시험의 정보 제공 - Exam, Examplan
+        user_id =request.user.id
+        # 로그인한 사용자가 즐겨찾기한 시험 ID들 가져오기
+        favorite_exam_ids = ExamFavorite.objects.filter(user_id=user_id).values_list('exam_id', flat=True)
+
+        # favorite_exam_ids 리스트 내 시험 id를 Exam , ExamPlan 에서 정보 가져오기
+        exams1 = Exam.objects.filter(exam_id__in=favorite_exam_ids)
+        exams2 = Exam.objects.filter(exams_id__in=favorite_exam_ids)
+    
+        # exams는 Exam과 ExamPlan 정보 모두 담은 리스트형태
+        # exams = exams1 + exams2
+
+        # 시리얼라이징
+        exam1_serializer = ExamTotalSerializer(exams1, many=True)
+        exam2_serializer = ExamDetailSerializer(exams2, many=True)
+
+        serialized_data = exam1_serializer.data + exam2_serializer.data
+
+        # 반환
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "information": serialized_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+'''
         data = Exam.objects.all()
         exam_list = list(data.values())  # 시험 정보를 담을 리스트 초기화
         
@@ -44,12 +80,9 @@ class ExamMainView(APIView):
         #         exam["is_favorite"] = False
 
         # # 시험들의 리스트 반환
-        # response_data = {
-        #     "status": status.HTTP_200_OK,
-        #     "information": exam_list
-        # }
-        # return Response(response_data, status=status.HTTP_200_OK)
-    '''
+        '''
+
+# 시험 목록 조회
 class ExamListView(APIView):
     permission_classes = [AllowAny]
     
