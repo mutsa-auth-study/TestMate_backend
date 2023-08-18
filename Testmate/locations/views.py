@@ -116,9 +116,10 @@ class LocationCommentView(APIView):
 class DeleteComment(APIView):
     def delete(self,request, *args, **kwargs):
         with lock:
+            print("삭제 시도")
             location_comment_id = kwargs.get('location_comment_id')
             try:
-                comment = LocationComment.objects.filter(location_comment_id = location_comment_id)
+                comment = LocationComment.objects.get(location_comment_id = location_comment_id)
                 comment.delete()
                 response_data = {
                     "status": status.HTTP_200_OK,
@@ -126,6 +127,7 @@ class DeleteComment(APIView):
                 return Response(response_data, status=status.HTTP_200_OK) # 삭제 성공
             # 해당 즐겨찾기 항목이 존재하지 않는 경우
             except LocationComment.DoesNotExist:
+                print("실패")
                 return Response({"detail": "Favorite exam not found"}, status=status.HTTP_400_BAD_REQUEST)
   
 # 작성 고사장 리뷰 조회 [GET][/location/mycomment] 
