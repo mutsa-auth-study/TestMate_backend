@@ -313,9 +313,13 @@ class ExamRecentView(APIView):
         #exams = Exam.objects.filter(exam_id__in=recent_exams_ids)
         data = Exam.objects.filter(exam_id__in=recent_exams_ids)
         exam_list = list(data.values())
-
-        # 시리얼라이징
-        # serializer = ExamTotalSerializer(exams, many=True)
+        
+        # 즐찾 여부 확인
+        for exam in exam_list:
+            if exam["exam_id"] in recent_exams_ids:
+                exam["is_favorite"] = True
+            else:
+                exam["is_favorite"] = False
 
         # 반환
         response_data  = {
