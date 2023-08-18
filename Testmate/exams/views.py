@@ -113,7 +113,6 @@ class ExamListView(APIView):
             "status": status.HTTP_200_OK,
             "information": exam_list
         }
-        # status 예외처리는 어디서 어떻게 해주나..
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -268,34 +267,49 @@ class ExamFavoriteView(APIView):
         '''
         # 최적화
         # Exam모델에서 favorite_exam_ids에 있는 exam_id와 일치하는 시험 정보 필드 가져오기
-        exams = Exam.objects.filter(exam_id__in=favorite_exam_ids)
+        data = Exam.objects.filter(exam_id__in=favorite_exam_ids)
+        exam_list = list(data.values())  # 시험 정보를 담을 리스트 초기화
 
-        # 시리얼라이징
-        serializer = ExamTotalSerializer(exams, many=True)
+        # 즐찾 여부 추가
+        for exam in exam_list:
+            exam["is_favorite"] = True
 
-        # 반환
+        # 시험들의 리스트 반환
         response_data = {
-                    "status": status.HTTP_200_OK,
-                    "information": serializer.data
-                }
+            "status": status.HTTP_200_OK,
+            "information": exam_list
+        }
         return Response(response_data, status=status.HTTP_200_OK)
+
+        # # 시리얼라이징
+        # serializer = ExamTotalSerializer(exams, many=True)
+
+        # # 반환
+        # response_data = {
+        #             "status": status.HTTP_200_OK,
+        #             "information": serializer.data
+        #         }
+        # return Response(response_data, status=status.HTTP_200_OK)
 
     # 즐겨찾기 등록
     def post(self, request):
         # POST 하는동안 다른 요청 보류
         with lock:
-            request.can_process_get = True
+            # 요청 데이터에서 유저 ID 가져오기
             user_id = request.user.id
-
-            # 현재 즐겨찾기한 시험 ID 개수 확인
-            favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
-
-            # 즐겨찾기한 시험 개수가 5개 이상이면 실패 응답 반환
-            if favorite_count >= 10:
-                return Response({"detail": "You can only add up to 10 exams to favorites."}, status=status.HTTP_400_BAD_REQUEST)
-
             # 요청 데이터에서 즐겨찾기할 시험 ID 가져오기
             exam_id = request.data.get('exam_id')
+
+            # 즐찾 이미 된거면 오류
+            check = ExamFavorite.objects.get(user_id=user_id, exam_id=exam_id)
+            if check:
+                return Response({"detail": "the exam is already favotirte"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 현재 즐겨찾기한 시험 ID 개수 확인
+            favorite_count = ExamFavorite.objects.filter(user_id=user_id).count()
+            # 즐겨찾기한 시험 개수가 10개 이상이면 실패 응답 반환
+            if favorite_count >= 10:
+                return Response({"detail": "You can only add up to 10 exams to favorites."}, status=status.HTTP_400_BAD_REQUEST)
 
             # 요청 데이터에 exam_id가 없으면 실패 응답 반환
             if not exam_id:
