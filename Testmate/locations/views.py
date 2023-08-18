@@ -289,23 +289,28 @@ class MainLocationCommentView(APIView) :
 '''
 # 내가 쓴 리뷰 조회 [GET] [/location/mycomment]
 class Mycomment(APIView):
-    def get(self,request):
-
-        # 인증
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-        
+    def get(self,request, **kwargs):
         user_id = request.user.id
+        
+        locationComment = LocationComment.objects.filter(user_id=user_id)
 
-        my_comment_ids = LocationComment.objects.filter(user_id=user_id).values_list('location_comment_id',flat=True)
+        locationComment = list(locationComment.values())
 
-        comments = LocationComment.objects.filter(location_comment_id__in=my_comment_ids)
+        print(locationComment)
+        
+        comment_list = []
 
-        serializer=LocationCommentSerializer(comments, many=True)
+        for comment in locationComment:
+            print(comment)
+            writer_obj = User.objects.get(id=comment["user_id_id"])
+            writer_data = UserInfoSerializer(writer_obj).data
+
+            comment["email"] = writer_data["email"]
+            comment_list.append(comment)
 
         response_data = {
-            "status" : status.HTTP_200_OK,
-            "information": serializer.data
+            "status": status.HTTP_200_OK,
+            "information": comment_list
         }
 
-        return Response(response_data,status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
