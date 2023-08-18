@@ -108,7 +108,7 @@ class ExamDetailView(APIView):
                 exam = ExamRecent.objects.filter(user_id = userID, exam_id = examID)
                 print(exam)
                 print(len(exam))
-                if len(exam): raise
+                if len(exam) != 0: raise
                 print("새로 조회")
                 # 새로운 조회 정보를 저장
                 recent_data = {"user_id":userID, "exam_id":examID}
@@ -131,7 +131,7 @@ class ExamDetailView(APIView):
                 
 
             # DB에서 해당 시험 일정 저장된 것 있는지 확인
-        except:
+        except len(exam) != 0:
             print("이미 조회한 시험")
 
         # DB에 있으면 꺼내서 호출
