@@ -41,8 +41,8 @@ class ExamMainView(APIView):
         data1 = Exam.objects.filter(exam_id__in=examsList)
         data2 = ExamPlan.objects.filter(exam_id__in=examsList)
 
-        examsList = data1.values()
-        examsPlanList = data2.values()
+        examsList = list(data1.values())
+        examsPlanList = list(data2.values())
     
         for i in range(len(examsList)):
             examsList[i].update(examsPlanList)
@@ -104,10 +104,10 @@ class ExamDetailView(APIView):
                 
                 # 이미 봤으면 패스
                 exam = ExamRecent.objects.get(user_id = userID, exam_id = examID)
-                if exam is None: raise
+                if exam: raise
 
-                recent_data = {"user_id":userID, "exam_id":examID}
                 # 새로운 조회 정보를 저장
+                recent_data = {"user_id":userID, "exam_id":examID}
                 serializer = ExamRecentSerializer(data=recent_data)
                 
                 if serializer.is_valid():
@@ -115,7 +115,6 @@ class ExamDetailView(APIView):
                     print("최근 조회 등록 성공")
                 else:
                     print("최근 조회 등록 실패")
-                    
                 
                 # 현재 저장된 조회 정보의 개수 체크
                 count = ExamRecent.objects.filter(user_id=userID).count()
