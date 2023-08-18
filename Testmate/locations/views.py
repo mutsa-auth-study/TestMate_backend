@@ -32,10 +32,7 @@ class getLocationComment(APIView):
         location_id = kwargs.get('location_id')
         locationComment = LocationComment.objects.filter(location_id_id=location_id)
         locationComment = list(locationComment.values())
-        
-        # location_id와 일치하는 데이터가 없을 경우 400 응답을 반환
-        if not locationComment:
-            return Response({"detail": "Location comment not found"}, status=status.HTTP_400_BAD_REQUEST)
+        print(locationComment)
         
         comment_list = []
 
